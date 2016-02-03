@@ -22,13 +22,32 @@
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
       var socket = io();
+      var events = ['login', 'p2p'];
       $('form').submit(function(){
-        socket.emit('unite', $('#m').val());
-        $('#m').val('');
-        return false;
+        try {
+          s = $('#m').val();
+          o = JSON.parse(s);
+          if (events.indexOf(o['event']) != -1) {
+            socket.emit(o['event'], s);
+          }
+          else {
+            throw 'unrecognized event ' + o['event'];
+          }
+          $('#m').val('');
+          return false;
+        }
+        catch (e) {
+          console.error(e);
+          return false;
+        }
       });
-      socket.on('unite', function(msg){
-        $('#messages').append($('<li>').text(msg));
+      socket.on('login', function(msg){
+        console.log(msg);
+        $('#messages').append($('<li>').text('[login response] ' + msg));
+      });
+      socket.on('p2p', function(msg){
+        console.log(msg);
+        $('#messages').append($('<li>').text('[p2p response] ' + msg));
       });
     </script>
   </body>

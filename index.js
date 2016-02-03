@@ -30,14 +30,14 @@ function pushP2PMessage2Redis(message) {
 function echoP2PMessage2Socket(message) {
   socket = getSocketByUserID(message['sender_id']);
   if (socket != null) {
-    socket.emit('unite', 'echo : ' + JSON.stringify(message));
+    socket.emit('p2p', JSON.stringify(message));
   }
 }
 
 function emitP2PMessage2Socket(message) {
   socket = getSocketByUserID(message['receiver_id']);
   if (socket != null) {
-    socket.emit('unite', 'receive: ' + JSON.stringify(message));
+    socket.emit('p2p', JSON.stringify(message));
     message = {
       'event': 'receive_messages',
       'message_ids': [message['id']]
@@ -49,7 +49,7 @@ function emitP2PMessage2Socket(message) {
 function emitP2PUnreceiveMessages2Socket(message) {
   socket = getSocketByUserID(message['receiver_id']);
   if (socket != null) {
-    socket.emit('unite', 'receive unreceived messages: ' + JSON.stringify(message));
+    socket.emit('p2p', JSON.stringify(message));
     var ids = [];
     for (i in message['messages']) { 
       m = message['messages'][i];
@@ -142,7 +142,6 @@ function addChannel2Socket(socket, channel) {
     }
     socketInfo['channels'].push(channel);
   }
-  console.log('all socketDicts: ' + socketDicts);
 }
 
 function hasChannel(socket, channel) {
@@ -201,24 +200,26 @@ app.get('/', function(req, res) {
 });
 
 io.on('connection', function(socket) {
+  console.log('socket ' + socket.id + ' connected')
   if (addSocket(socket)) {
-    socket.on('unite', function(data) {
+    socket.on('login', function(data) {
+      console.log('socket ' + socket.id + ' login event data:' + data);
       data = JSON.parse(data);  // string to object
-      console.log('socket ' + socket.id + ' data:' + JSON.stringify(data));
-      if (data.event == 'login') {
-        handleLogin(socket, 'unite', data);
-      }
-      else if (hasLogined(socket)) {
-        if (data.event == 'p2p') {
-          handleP2P(socket, 'unite', data);
-        }
+      handleLogin(socket, 'login', data);
+    });
+    socket.on('p2p', function(data) {
+      console.log('socket ' + socket.id + ' p2p event data:' + data);
+      if (hasLogined(socket)) {
+        data = JSON.parse(data);  // string to object
+        handleP2P(socket, 'p2p', data);
       }
       else {
-        socket.emit('unite', 'Login first');
+        socket.emit('login', 'Login first');
       }
     });
-    addChannel2Socket(socket, 'unite');
-    /* handler disconnect */
+    addChannel2Socket(socket, 'login');
+    addChannel2Socket(socket, 'p2p');
+    /* handler disconnection */
     socket.on('disconnect', function() {
       console.log('socket ' + socket.id + ' disconnected');
       delSocket(socket);
