@@ -29,7 +29,8 @@ user B
 A -> B
 ```
 {
-    "event": "p2p",
+    "event": "chat",
+    "sub_event": "p2p",
     "sender_id": "a2b7c193f5df42a69942d0bc848c0467",
     "receiver_id": "a76b6e59c2c7470e93fb06abe97f9633",
     "content_type": "text",
@@ -42,7 +43,8 @@ A -> B
 B -> A
 ```
 {
-    "event": "p2p",
+    "event": "chat",
+    "sub_event": "p2p",
     "sender_id": "a76b6e59c2c7470e93fb06abe97f9633",
     "receiver_id": "a2b7c193f5df42a69942d0bc848c0467",
     "content_type": "text",
@@ -51,6 +53,39 @@ B -> A
     }
 }
 ```
+
+group_id 8acfcf1705eb44b082e281f3efbc52a2
+
+A -> group
+
+```
+{
+    "event": "chat",
+    "sub_event": "p2g",
+    "sender_id": "a2b7c193f5df42a69942d0bc848c0467",
+    "group_id": "8acfcf1705eb44b082e281f3efbc52a2",
+    "content_type": "text",
+    "content": {
+        "text": "hello group"
+    }
+}
+```
+
+B -> group
+```
+{
+    "event": "chat",
+    "sub_event": "p2g",
+    "sender_id": "0787ac6ad30b4bdeafc654a225eb96ba",
+    "group_id": "8acfcf1705eb44b082e281f3efbc52a2",
+    "content_type": "text",
+    "content": {
+        "text": "hello B"
+    }
+}
+```
+
+
 
 * 返回单条
 

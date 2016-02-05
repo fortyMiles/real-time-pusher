@@ -22,7 +22,7 @@
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
       var socket = io();
-      var events = ['login', 'p2p'];
+      var events = ['login', 'chat'];
       $('form').submit(function(){
         try {
           s = $('#m').val();
@@ -45,9 +45,9 @@
         console.log(msg);
         $('#messages').append($('<li>').text('[login response] ' + msg));
       });
-      socket.on('p2p', function(msg){
+      socket.on('chat', function(msg){
         console.log(msg);
-        $('#messages').append($('<li>').text('[p2p response] ' + msg));
+        $('#messages').append($('<li>').text('[chat response] ' + msg));
       });
       socket.on('invitation', function(msg){
         console.log(msg);

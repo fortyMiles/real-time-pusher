@@ -3,63 +3,78 @@
 *********************/
 
 var redis = require("redis");
-var p2pSubClient = redis.createClient();
-var p2pPubClient = redis.createClient();
+var chatSubClient = redis.createClient();
+var chatPubClient = redis.createClient();
 
-p2pSubClient.select(2, function() { /* ... */ });
-p2pPubClient.select(2, function() { /* ... */ });
+chatSubClient.select(2, function() { /* ... */ });
+chatPubClient.select(2, function() { /* ... */ });
 
-p2pSubClient.on("subscribe", function (channel, count) { /* ... */ });
-p2pSubClient.on("message", function (channel, data) {
+chatSubClient.on("subscribe", function (channel, count) { /* ... */ });
+chatSubClient.on("message", function (channel, data) {
     message = JSON.parse(data);
-    console.log("p2pSubClient channel " + channel + ": " + data);
-    if (message['event'] == 'p2p') {
-      sendP2PMessage2Socket(message);
-      echoP2PMessage2Socket(message);
+    console.log("chatSubClient channel " + channel + ": " + data);
+    if (message['event'] == 'chat') {
+      sendChatMessage2Socket(message);
+      echoChatMessage2Socket(message);
     }
     else if (message['event'] == 'get_unreceived_messages') {
-      emitP2PUnreceiveMessages2Socket(message);
+      emitChatUnreceiveMessages2Socket(message);
     }
 });
-p2pSubClient.subscribe("p2p<");
+chatSubClient.subscribe("chat<");
 
-function pushP2PMessage2Redis(message) {
-  p2pPubClient.publish(">p2p", JSON.stringify(message));
+function pubChatMessage2Redis(message) {
+  chatPubClient.publish(">chat", JSON.stringify(message));
 }
 
-function echoP2PMessage2Socket(message) {
+function echoChatMessage2Socket(message) {
   socket = getSocketByUserID(message['sender_id']);
   if (socket != null) {
-    socket.emit('p2p', JSON.stringify(message));
+    socket.emit('chat', JSON.stringify(message));
   }
 }
 
-function sendP2PMessage2Socket(message) {
+function sendChatMessage2Socket(message) {
   socket = getSocketByUserID(message['receiver_id']);
   if (socket != null) {
-    socket.emit('p2p', JSON.stringify(message));
-    message = {
-      'event': 'receive_messages',
-      'message_ids': [message['id']]
-    };
-    pushP2PMessage2Redis(message);
+    socket.emit('chat', JSON.stringify(message));
+    if (message['sub_event'] == 'p2p') {
+      message = {
+        'event': 'receive_messages',
+        'p2p_message_ids': [message['id']]
+      };
+      pubChatMessage2Redis(message);
+    }
+    else if (message['sub_event'] == 'p2g') {
+      message = {
+        'event': 'receive_messages',
+        'p2g_message_ids': [message['id']]
+      };
+      pubChatMessage2Redis(message);
+    }
   }
 }
 
-function emitP2PUnreceiveMessages2Socket(message) {
+function emitChatUnreceiveMessages2Socket(message) {
   socket = getSocketByUserID(message['receiver_id']);
   if (socket != null) {
-    socket.emit('p2p', JSON.stringify(message));
-    var ids = [];
-    for (i in message['messages']) { 
-      m = message['messages'][i];
-      ids.push(m['id']);
+    socket.emit('chat', JSON.stringify(message));
+    var p2p_ids = [];
+    var p2g_ids = [];
+    for (i in message['p2p_messages']) { 
+      m = message['p2p_messages'][i];
+      p2p_ids.push(m['id']);
+    }
+    for (i in message['p2g_messages']) { 
+      m = message['p2g_messages'][i];
+      p2g_ids.push(m['id']);
     }
     message = {
       'event': 'receive_messages',
-      'message_ids': ids
+      'p2p_message_ids': p2p_ids,
+      'p2g_message_ids': p2g_ids
     };
-    pushP2PMessage2Redis(message);
+    pubChatMessage2Redis(message);
   }
 }
 
@@ -140,7 +155,7 @@ function loginSocket(socket, data) {
     socketInfo['login'] = true;
     socketInfo['user_id'] = data['user_id'];
     userSockets[data['user_id']] = socket.id;
-
+    // 获取未读消息
     getUnreceivedMessages(socket, data['user_id']);
   }
   console.log('all userSockets: ' + JSON.stringify(userSockets));
@@ -185,7 +200,6 @@ function handleLogin(socket, channel, data) {
     data['login'] = true;
     loginSocket(socket, data);
     socket.emit(channel, JSON.stringify(data));
-    listenOnP2P(socket, channel)
   }
   else {
     data['login'] = false;
@@ -193,20 +207,10 @@ function handleLogin(socket, channel, data) {
   }
 }
 
-function handleP2P(socket, channel, data) {
-  console.log('[handleP2P] socket ' + socket.id + ' on channel ' + 
+function handleChat(socket, channel, data) {
+  console.log('[handleChat] socket ' + socket.id + ' on channel ' + 
     channel + ' receive data:' + JSON.stringify(data));
-  pushP2PMessage2Redis(data);
-}
-
-function listenOnP2P(socket, channel) {
-  if (!hasChannel(socket, channel)) {
-    console.log('[handleLogin] socket ' + socket.id + ' listen on channel ' + channel);
-    socket.on(channel, function(data) {
-      data = JSON.parse(data);
-      handleP2P(socket, channel, data);
-    });
-  }
+  pubChatMessage2Redis(data);
 }
 
 function getUnreceivedMessages(socket, receiver_id) {
@@ -214,7 +218,7 @@ function getUnreceivedMessages(socket, receiver_id) {
     'event': 'get_unreceived_messages',
     'receiver_id': receiver_id 
   };
-  pushP2PMessage2Redis(message);
+  pubChatMessage2Redis(message);
 }
 
 /* setup socketIO */
@@ -230,18 +234,18 @@ io.on('connection', function(socket) {
       data = JSON.parse(data);  // string to object
       handleLogin(socket, 'login', data);
     });
-    socket.on('p2p', function(data) {
-      console.log('socket ' + socket.id + ' p2p event data:' + data);
+    socket.on('chat', function(data) {
+      console.log('socket ' + socket.id + ' chat event data:' + data);
       if (hasLogined(socket)) {
         data = JSON.parse(data);  // string to object
-        handleP2P(socket, 'p2p', data);
+        handleChat(socket, 'chat', data);
       }
       else {
         socket.emit('login', 'Login first');
       }
     });
     addChannel2Socket(socket, 'login');
-    addChannel2Socket(socket, 'p2p');
+    addChannel2Socket(socket, 'chat');
     /* handler disconnection */
     socket.on('disconnect', function() {
       console.log('socket ' + socket.id + ' disconnected');
