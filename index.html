@@ -49,6 +49,10 @@
         console.log(msg);
         $('#messages').append($('<li>').text('[p2p response] ' + msg));
       });
+      socket.on('invitation', function(msg){
+        console.log(msg);
+        $('#messages').append($('<li>').text('[invitation response] ' + msg));
+      });
     </script>
   </body>
 </html>

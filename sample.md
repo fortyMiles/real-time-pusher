@@ -98,3 +98,37 @@ B -> A
 }
 ```
 
+### invitation
+
+* invitee接受的invitation
+
+```
+{
+    "event": "invitation",
+    "sub_event": "sd_inv",
+    "invitation_id": "zxsdatw53453453645adfas",
+    "receiver_id": "a76b6e59c2c7470e93fb06abe97f9633",
+    "message": {
+      "inviter_avatar": "",
+      "inviter_nickname": "whitefoxx",
+      "invitee": "0787ac6ad30b4bdeafc654a225eb96ba",
+      "group_name": "modern family",
+      "group_avatar": "",
+      "role": "mother",
+      "message": "welcome my wife",
+      "group_id": "8acfcf1705eb44b082e281f3efbc52a2",
+      "inviter": "a2b7c193f5df42a69942d0bc848c0467"
+    }
+}
+```
+
+* inviter接受的invitation notification
+
+```
+{
+  "receiver_id": "a2b7c193f5df42a69942d0bc848c0467",
+  "invitation_id": "9285a07d0d9d49aab74fc3f6364604dc",
+  "sub_event": "acc_inv_ntf",
+  "event": "invitation"
+}
+```

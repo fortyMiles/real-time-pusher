@@ -3,28 +3,28 @@
 *********************/
 
 var redis = require("redis");
-var subClient = redis.createClient();
-var pubClient = redis.createClient();
+var p2pSubClient = redis.createClient();
+var p2pPubClient = redis.createClient();
 
-subClient.select(2, function() { /* ... */ });
-pubClient.select(2, function() { /* ... */ });
+p2pSubClient.select(2, function() { /* ... */ });
+p2pPubClient.select(2, function() { /* ... */ });
 
-subClient.on("subscribe", function (channel, count) { /* ... */ });
-subClient.on("message", function (channel, data) {
+p2pSubClient.on("subscribe", function (channel, count) { /* ... */ });
+p2pSubClient.on("message", function (channel, data) {
     message = JSON.parse(data);
-    console.log("subClient channel " + channel + ": " + data);
+    console.log("p2pSubClient channel " + channel + ": " + data);
     if (message['event'] == 'p2p') {
-      emitP2PMessage2Socket(message);
+      sendP2PMessage2Socket(message);
       echoP2PMessage2Socket(message);
     }
     else if (message['event'] == 'get_unreceived_messages') {
       emitP2PUnreceiveMessages2Socket(message);
     }
 });
-subClient.subscribe("p2p<");
+p2pSubClient.subscribe("p2p<");
 
 function pushP2PMessage2Redis(message) {
-  pubClient.publish(">p2p", JSON.stringify(message));
+  p2pPubClient.publish(">p2p", JSON.stringify(message));
 }
 
 function echoP2PMessage2Socket(message) {
@@ -34,7 +34,7 @@ function echoP2PMessage2Socket(message) {
   }
 }
 
-function emitP2PMessage2Socket(message) {
+function sendP2PMessage2Socket(message) {
   socket = getSocketByUserID(message['receiver_id']);
   if (socket != null) {
     socket.emit('p2p', JSON.stringify(message));
@@ -63,7 +63,30 @@ function emitP2PUnreceiveMessages2Socket(message) {
   }
 }
 
+/******************** invitation ********************/
 
+var invSubClient = redis.createClient();
+var invPubClient = redis.createClient();
+
+invSubClient.select(2, function() { /* ... */ });
+invPubClient.select(2, function() { /* ... */ });
+
+invSubClient.on("subscribe", function (channel, count) { /* ... */ });
+invSubClient.on("message", function (channel, data) {
+    message = JSON.parse(data);
+    console.log("invSubClient channel " + channel + ": " + data);
+    if (message['event'] == 'invitation') {
+      sendInvMessage2Socket(message);
+    }
+});
+invSubClient.subscribe("invitation<");
+
+function sendInvMessage2Socket(message) {
+  socket = getSocketByUserID(message['receiver_id']);
+  if (socket != null) {
+    socket.emit('invitation', JSON.stringify(message));
+  }
+}
 /*********************
 * socketIO handlers 
 *********************/
