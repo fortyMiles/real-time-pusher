@@ -11,70 +11,70 @@ chatPubClient.select(2, function() { /* ... */ });
 
 chatSubClient.on("subscribe", function (channel, count) { /* ... */ });
 chatSubClient.on("message", function (channel, data) {
-    message = JSON.parse(data);
+    var message = JSON.parse(data);
     console.log("chatSubClient channel " + channel + ": " + data);
     if (message['event'] == 'chat') {
-      sendChatMessage2Socket(message);
-      echoChatMessage2Socket(message);
+      sendChatMessage2Client(message);  // 发送消息给receiver
+      echoChatMessage2Client(message);  // 回复sender消息已接收到
     }
     else if (message['event'] == 'get_unreceived_messages') {
-      emitChatUnreceiveMessages2Socket(message);
+      sendChatUnreceiveMessages2Client(message);
     }
 });
-chatSubClient.subscribe("chat<");
+chatSubClient.subscribe("chat->");
 
-function pubChatMessage2Redis(message) {
-  chatPubClient.publish(">chat", JSON.stringify(message));
+function pubChatMessage2Server(message) {
+  chatPubClient.publish("->chat", JSON.stringify(message));
 }
 
-function echoChatMessage2Socket(message) {
-  socket = getSocketByUserID(message['sender_id']);
+function echoChatMessage2Client(message) {
+  var socket = getSocketByUserID(message['sender_id']);
   if (socket != null) {
     socket.emit('chat', JSON.stringify(message));
   }
 }
 
-function sendChatMessage2Socket(message) {
-  socket = getSocketByUserID(message['receiver_id']);
+function sendChatMessage2Client(message) {
+  var socket = getSocketByUserID(message['receiver_id']);
   if (socket != null) {
     socket.emit('chat', JSON.stringify(message));
     if (message['sub_event'] == 'p2p') {
-      message = {
+      var newMessage = {
         'event': 'receive_messages',
         'p2p_message_ids': [message['id']]
       };
-      pubChatMessage2Redis(message);
+      pubChatMessage2Server(newMessage);
     }
     else if (message['sub_event'] == 'p2g') {
-      message = {
+      var newMessage = {
         'event': 'receive_messages',
         'p2g_message_ids': [message['id']]
       };
-      pubChatMessage2Redis(message);
+      pubChatMessage2Server(newMessage);
     }
   }
 }
 
-function emitChatUnreceiveMessages2Socket(message) {
-  socket = getSocketByUserID(message['receiver_id']);
+function sendChatUnreceiveMessages2Client(message) {
+  var socket = getSocketByUserID(message['receiver_id']);
   if (socket != null) {
     socket.emit('chat', JSON.stringify(message));
     var p2p_ids = [];
     var p2g_ids = [];
     for (i in message['p2p_messages']) { 
-      m = message['p2p_messages'][i];
+      var m = message['p2p_messages'][i];
       p2p_ids.push(m['id']);
     }
     for (i in message['p2g_messages']) { 
-      m = message['p2g_messages'][i];
+      var m = message['p2g_messages'][i];
       p2g_ids.push(m['id']);
     }
-    message = {
+    var newMessage = {
       'event': 'receive_messages',
       'p2p_message_ids': p2p_ids,
       'p2g_message_ids': p2g_ids
     };
-    pubChatMessage2Redis(message);
+    pubChatMessage2Server(newMessage);
   }
 }
 
@@ -88,20 +88,56 @@ invPubClient.select(2, function() { /* ... */ });
 
 invSubClient.on("subscribe", function (channel, count) { /* ... */ });
 invSubClient.on("message", function (channel, data) {
-    message = JSON.parse(data);
+    var message = JSON.parse(data);
     console.log("invSubClient channel " + channel + ": " + data);
     if (message['event'] == 'invitation') {
-      sendInvMessage2Socket(message);
+      sendInvMessage2Client(message);
     }
 });
-invSubClient.subscribe("invitation<");
+invSubClient.subscribe("invitation->");
 
-function sendInvMessage2Socket(message) {
-  socket = getSocketByUserID(message['receiver_id']);
-  if (socket != null) {
+function sendInvMessage2Client(message) {
+  var socket = getSocketByUserID(message['receiver_id']);
+  if (socket != null && hasLogined(socket)) {
     socket.emit('invitation', JSON.stringify(message));
   }
 }
+
+
+/******************** login ********************/
+
+var loginSubClient = redis.createClient();
+var loginPubClient = redis.createClient();
+
+loginSubClient.select(2, function() { /* ... */ });
+loginPubClient.select(2, function() { /* ... */ });
+
+loginSubClient.on("subscribe", function (channel, count) { /* ... */ });
+loginSubClient.on("message", function (channel, data) {
+    var message = JSON.parse(data);
+    console.log("loginSubClient channel " + channel + ": " + data);
+    if (message['event'] == 'login' && message['login']) {
+      var socket = getSocketByUserID(message['receiver_id']);
+      loginSocket(socket, message['receiver_id']);
+      sendLoginMessage2Client(message);
+    }
+    else {
+      sendLoginMessage2Client(message);
+    }
+});
+loginSubClient.subscribe("login->");
+
+function sendLoginMessage2Client(message) {
+  var socket = getSocketByUserID(message['receiver_id']);
+  if (socket != null) {
+    socket.emit('login', JSON.stringify(message));
+  }
+}
+
+function pubLoginMessage2Server(message) {
+  loginPubClient.publish("->login", JSON.stringify(message));
+}
+
 /*********************
 * socketIO handlers 
 *********************/
@@ -122,7 +158,7 @@ function addSocket(socket) {
 }
 
 function delSocket(socket) {
-  socketInfo = socketDicts[socket.id];
+  var socketInfo = socketDicts[socket.id];
   if (socketInfo) {
     delete userSockets[socketInfo['user_id']];
     delete socketDicts[socket.id];
@@ -130,8 +166,17 @@ function delSocket(socket) {
   console.log('all userSockets: ' + JSON.stringify(userSockets));
 }
 
+function clearSocket(socket) {
+  var socketInfo = socketDicts[socket.id];
+  if (socketInfo) {
+    delete userSockets[socketInfo['user_id']];
+  }
+  socketDicts[socket.id] = {'socket': socket};
+  console.log('all userSockets: ' + JSON.stringify(userSockets));
+}
+
 function getSocketBySocketID(socketID) {
-  socketInfo = socketDicts[socketID];
+  var socketInfo = socketDicts[socketID];
   if (socketInfo) {
     return socketInfo['socket'];
   }
@@ -139,30 +184,39 @@ function getSocketBySocketID(socketID) {
 }
 
 function getSocketByUserID(userID) {
-  socketID = userSockets[userID];
+  var socketID = userSockets[userID];
   if (socketID) {
     return getSocketBySocketID(socketID);
   }
   return null;
 }
 
-function loginSocket(socket, data) {
-  socketInfo = socketDicts[socket.id];
+function trackUserSocket(socket, userID) {
+  var oldSocket = getSocketByUserID(userID);
+  if (oldSocket && oldSocket != socket) {
+    delSocket(oldSocket);
+  }
+  userSockets[userID] = socket.id;
+}
+
+function loginSocket(socket, userID) {
+  if (!socket)
+    return;
+  var socketInfo = socketDicts[socket.id];
   if (!socketInfo) {
     socketDicts[socket.id] = {'socket': socket};
   }
   if (socketInfo) {
     socketInfo['login'] = true;
-    socketInfo['user_id'] = data['user_id'];
-    userSockets[data['user_id']] = socket.id;
+    socketInfo['user_id'] = userID;
     // 获取未读消息
-    getUnreceivedMessages(socket, data['user_id']);
+    getUnreceivedMessages(socket, userID);
   }
   console.log('all userSockets: ' + JSON.stringify(userSockets));
 }
 
 function hasLogined(socket) {
-  socketInfo = socketDicts[socket.id];
+  var socketInfo = socketDicts[socket.id];
   if (socketInfo && socketInfo['login']) {
     return true;
   }
@@ -170,7 +224,7 @@ function hasLogined(socket) {
 }
 
 function addChannel2Socket(socket, channel) {
-  socketInfo = socketDicts[socket.id];
+  var socketInfo = socketDicts[socket.id];
   if (!socketInfo) {
     socketDicts[socket.id] = {'socket': socket};
   }
@@ -183,7 +237,7 @@ function addChannel2Socket(socket, channel) {
 }
 
 function hasChannel(socket, channel) {
-  socketInfo = socketDicts[socket.id];
+  var socketInfo = socketDicts[socket.id];
   if (socketInfo) {
     if (socketInfo['channels'] && socketInfo['channels'].indexOf(channel) != -1) {
       return true;
@@ -195,11 +249,10 @@ function hasChannel(socket, channel) {
 function handleLogin(socket, channel, data) {
   console.log('[handleLogin] socket ' + socket.id + ' on channel ' + 
     channel + ' receive data:' + JSON.stringify(data));
-  // TODO: login handlers
+  clearSocket(socket);
   if (data['user_id']) {
-    data['login'] = true;
-    loginSocket(socket, data);
-    socket.emit(channel, JSON.stringify(data));
+    trackUserSocket(socket, data['user_id']);
+    pubLoginMessage2Server(data);
   }
   else {
     data['login'] = false;
@@ -210,18 +263,18 @@ function handleLogin(socket, channel, data) {
 function handleChat(socket, channel, data) {
   console.log('[handleChat] socket ' + socket.id + ' on channel ' + 
     channel + ' receive data:' + JSON.stringify(data));
-  pubChatMessage2Redis(data);
+  pubChatMessage2Server(data);
 }
 
 function getUnreceivedMessages(socket, receiver_id) {
-  message = {
+  var message = {
     'event': 'get_unreceived_messages',
     'receiver_id': receiver_id 
   };
-  pubChatMessage2Redis(message);
+  pubChatMessage2Server(message);
 }
 
-/* setup socketIO */
+/********** setup socketIO **********/
 app.get('/', function(req, res) {
   res.sendFile(__dirname + '/index.html');
 });
@@ -231,13 +284,13 @@ io.on('connection', function(socket) {
   if (addSocket(socket)) {
     socket.on('login', function(data) {
       console.log('socket ' + socket.id + ' login event data:' + data);
-      data = JSON.parse(data);  // string to object
+      var data = JSON.parse(data);  // string to object
       handleLogin(socket, 'login', data);
     });
     socket.on('chat', function(data) {
       console.log('socket ' + socket.id + ' chat event data:' + data);
       if (hasLogined(socket)) {
-        data = JSON.parse(data);  // string to object
+        var data = JSON.parse(data);  // string to object
         handleChat(socket, 'chat', data);
       }
       else {

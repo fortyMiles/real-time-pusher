@@ -10,7 +10,8 @@ user A
 ```
 {
     "event": "login",
-    "user_id": "a2b7c193f5df42a69942d0bc848c0467"
+    "user_id": "a2b7c193f5df42a69942d0bc848c0467",
+    "token": "80a93e3c435775c0dec28f6a2ebafa49"
 }
 ```
 
@@ -18,7 +19,8 @@ user B
 ```
 {
     "event": "login",
-    "user_id": "a76b6e59c2c7470e93fb06abe97f9633"
+    "user_id": "a76b6e59c2c7470e93fb06abe97f9633",
+    "token": "bc47eeae0a5112469514821e8409ba43"
 }
 ```
 
