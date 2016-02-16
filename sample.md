@@ -4,9 +4,7 @@
 
 * login message format
 
-example user_ids: a2b7c193f5df42a69942d0bc848c0467, a76b6e59c2c7470e93fb06abe97f9633
-
-user A
+father
 ```
 {
     "event": "login",
@@ -15,7 +13,16 @@ user A
 }
 ```
 
-user B
+mother
+```
+{
+    "event": "login",
+    "user_id": "0787ac6ad30b4bdeafc654a225eb96ba",
+    "token": "798f085bb39f69ca11889dde77050a0d"
+}
+```
+
+p-grandfather
 ```
 {
     "event": "login",
@@ -24,70 +31,73 @@ user B
 }
 ```
 
+
 ### message
 
-* chat message format
+* private chat message
 
-A -> B
+father -> mother
 ```
 {
     "event": "chat",
     "sub_event": "p2p",
     "sender_id": "a2b7c193f5df42a69942d0bc848c0467",
-    "receiver_id": "a76b6e59c2c7470e93fb06abe97f9633",
+    "receiver_id": "0787ac6ad30b4bdeafc654a225eb96ba",
     "content_type": "text",
     "content": {
-        "text": "hello"
+        "text": "hello mother"
     }
 }
 ```
 
-B -> A
+mother -> father
 ```
 {
     "event": "chat",
     "sub_event": "p2p",
-    "sender_id": "a76b6e59c2c7470e93fb06abe97f9633",
+    "sender_id": "0787ac6ad30b4bdeafc654a225eb96ba",
     "receiver_id": "a2b7c193f5df42a69942d0bc848c0467",
     "content_type": "text",
     "content": {
-        "text": "hello"
+        "text": "hello father"
     }
 }
 ```
 
-group_id 8acfcf1705eb44b082e281f3efbc52a2
+* group chat message
 
-A -> group
+group_id 34f3ba7121d348b29f17fa0dd1678a3a
+
+father -> group
 
 ```
 {
     "event": "chat",
     "sub_event": "p2g",
     "sender_id": "a2b7c193f5df42a69942d0bc848c0467",
-    "group_id": "8acfcf1705eb44b082e281f3efbc52a2",
+    "group_id": "34f3ba7121d348b29f17fa0dd1678a3a",
     "content_type": "text",
     "content": {
-        "text": "hello group"
+        "text": "group message from father"
     }
 }
 ```
 
-B -> group
+mother -> group
 ```
 {
     "event": "chat",
     "sub_event": "p2g",
     "sender_id": "0787ac6ad30b4bdeafc654a225eb96ba",
-    "group_id": "8acfcf1705eb44b082e281f3efbc52a2",
+    "group_id": "34f3ba7121d348b29f17fa0dd1678a3a",
     "content_type": "text",
     "content": {
-        "text": "hello B"
+        "text": "group message from mother"
     }
 }
 ```
 
-
+### 推送未读的messages
 
 * 返回单条
 
@@ -141,21 +151,21 @@ B -> group
 
 ```
 {
-    "event": "invitation",
-    "sub_event": "sd_inv",
-    "invitation_id": "zxsdatw53453453645adfas",
-    "receiver_id": "a76b6e59c2c7470e93fb06abe97f9633",
-    "message": {
-      "inviter_avatar": "",
-      "inviter_nickname": "whitefoxx",
-      "invitee": "0787ac6ad30b4bdeafc654a225eb96ba",
-      "group_name": "modern family",
-      "group_avatar": "",
-      "role": "mother",
-      "message": "welcome my wife",
-      "group_id": "8acfcf1705eb44b082e281f3efbc52a2",
-      "inviter": "a2b7c193f5df42a69942d0bc848c0467"
-    }
+  "receiver_id": "0787ac6ad30b4bdeafc654a225eb96ba",
+  "invitation_id": "bb77386007cf47749f5b59c0b1924d05",
+  "message": {
+    "group_avatar": "",
+    "role": "mother",
+    "inviter_avatar": "",
+    "inviter_nickname": "whitefoxx",
+    "group_id": "34f3ba7121d348b29f17fa0dd1678a3a",
+    "inviter": "a2b7c193f5df42a69942d0bc848c0467",
+    "message": "welcome mother",
+    "invitee": "0787ac6ad30b4bdeafc654a225eb96ba",
+    "group_name": "B&J的小家"
+  },
+  "event": "invitation",
+  "sub_event": "sd_inv"
 }
 ```
 
