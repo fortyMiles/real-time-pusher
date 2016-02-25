@@ -116,19 +116,19 @@ loginSubClient.on("subscribe", function (channel, count) { /* ... */ });
 loginSubClient.on("message", function (channel, data) {
     var message = JSON.parse(data);
     console.log("loginSubClient channel " + channel + ": " + data);
-    if (message['event'] == 'login' && message['login']) {
-      var socket = getSocketByUserID(message['receiver_id']);
-      loginSocket(socket, message['receiver_id']);
+    if (message['event'] == 'login') {
+      var socket = getSocketByUserID(message.user_id);
+      loginSocket(socket, message.user_id);
       sendLoginMessage2Client(message);
     }
     else {
       sendLoginMessage2Client(message);
     }
 });
-loginSubClient.subscribe("login->");
+loginSubClient.subscribe("->login");
 
 function sendLoginMessage2Client(message) {
-  var socket = getSocketByUserID(message['receiver_id']);
+  var socket = getSocketByUserID(message.user_id);
   if (socket != null) {
     socket.emit('login', JSON.stringify(message));
   }
@@ -163,7 +163,7 @@ function delSocket(socket) {
     delete userSockets[socketInfo['user_id']];
     delete socketDicts[socket.id];
   }
-  console.log('all userSockets: ' + JSON.stringify(userSockets));
+  console.log('del-socket ==> all userSockets: ' + JSON.stringify(userSockets));
 }
 
 function clearSocket(socket) {
@@ -172,7 +172,7 @@ function clearSocket(socket) {
     delete userSockets[socketInfo['user_id']];
   }
   socketDicts[socket.id] = {'socket': socket};
-  console.log('all userSockets: ' + JSON.stringify(userSockets));
+  console.log('clear-socket ==> all userSockets: ' + JSON.stringify(userSockets));
 }
 
 function getSocketBySocketID(socketID) {
@@ -212,7 +212,7 @@ function loginSocket(socket, userID) {
     // 获取未读消息
     getUnreceivedMessages(socket, userID);
   }
-  console.log('all userSockets: ' + JSON.stringify(userSockets));
+  console.log('login socket==>all userSockets: ' + JSON.stringify(userSockets));
 }
 
 function hasLogined(socket) {
