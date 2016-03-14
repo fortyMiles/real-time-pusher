@@ -78,6 +78,33 @@ function sendChatUnreceiveMessages2Client(message) {
   }
 }
 
+/******************** book ***************************/
+
+var bookSubClient = redis.createClient();
+var bookPubClient = redis.createClient();
+
+
+bookSubClient.select(2, function() { /* ... */ });
+bookPubClient.select(2, function() { /* ... */ });
+
+bookSubClient.on("subscribe", function (channel, count) { /* ... */ });
+
+bookSubClient.on("message", function (channel, data) {
+    var message = JSON.parse(data);
+    console.log("BookEvent channel " + channel + ": " + data);
+    if (message['event'] == 'book') {
+      sendBookMessage2Client(message);
+    }
+});
+bookSubClient.subscribe("book->");
+
+function sendBookMessage2Client(message) {
+  var socket = getSocketByUserID(message['receiver_id']);
+  if (socket != null && hasLogined(socket)) {
+    socket.emit('book', JSON.stringify(message));
+  }
+}
+
 /******************** invitation ********************/
 
 var invSubClient = redis.createClient();

@@ -53,6 +53,10 @@
         console.log(msg);
         $('#messages').append($('<li>').text('[invitation response] ' + msg));
       });
+       socket.on('book', function(msg){
+        console.log(msg);
+        $('#messages').append($('<li>').text('[book response] ' + msg));
+      });
     </script>
   </body>
 </html>
