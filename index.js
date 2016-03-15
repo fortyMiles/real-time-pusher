@@ -1,4 +1,15 @@
 /*********************
+* utility functions 
+*********************/
+function json2object(data) {
+  if (typeof data === 'string' || data instanceof String) {
+    data = JSON.parse(data);  // string to object
+  }
+  return data;
+}
+
+
+/*********************
 * redis pubsub handlers 
 *********************/
 var redis = require("redis");
@@ -8,8 +19,8 @@ chatSubClient.select(2, function() { /* ... */ });
 chatPubClient.select(2, function() { /* ... */ });
 chatSubClient.on("subscribe", function (channel, count) { /* ... */ });
 chatSubClient.on("message", function (channel, data) {
-    var message = JSON.parse(data);
-    console.log("chatSubClient channel " + channel + ": " + data);
+    var message = json2object(data);
+    console.log("chatSubClient channel " + channel + ": " + JSON.stringify(data));
     if (message['event'] == 'chat') {
       sendChatMessage2Client(message);  // 发送消息给receiver
       echoChatMessage2Client(message);  // 回复sender消息已接收到
@@ -82,8 +93,7 @@ var _send_event_message_to_client = function(event, message, receiver_id){
 function _send_event_to_client(message){
   return function(event){
     if(message.event == event){
-      debugger;
-      console.log(event + " message: " + message);
+      console.log(event + " message: " + JSON.stringify(message));
       _send_event_message_to_client(event, message, message.receiver_id);
     }
   }
@@ -99,7 +109,7 @@ eventSubClient.select(2, function() { /* ... */ });
 
 eventSubClient.on("subscribe", function (channel, count) { /* ... */ });
 eventSubClient.on("message", function (channel, data) {
-    var message = JSON.parse(data);
+    var message = json2object(data);
     EVENT_LIST.map(_send_event_to_client(message));
 });
 
@@ -113,7 +123,7 @@ loginSubClient.select(2, function() { /* ... */ });
 loginPubClient.select(2, function() { /* ... */ });
 loginSubClient.on("subscribe", function (channel, count) { /* ... */ });
 loginSubClient.on("message", function (channel, data) {
-    var message = JSON.parse(data);
+    var message = json2object(data);
     console.log("loginSubClient channel " + channel + ": " + data);
     if (message['event'] == 'login' && message['login']) {
       var socket = getSocketByUserID(message['receiver_id']);
@@ -262,14 +272,14 @@ io.on('connection', function(socket) {
   console.log('socket ' + socket.id + ' connected')
   if (addSocket(socket)) {
     socket.on('login', function(data) {
-      console.log('socket ' + socket.id + ' login event data:' + data);
-      var data = JSON.parse(data);  // string to object
+      data = json2object(data);  // string to object
+      console.log('socket ' + socket.id + ' login event data:' + JSON.stringify(data));
       handleLogin(socket, 'login', data);
     });
     socket.on('chat', function(data) {
-      console.log('socket ' + socket.id + ' chat event data:' + data);
+      console.log('socket ' + socket.id + ' chat event data:' + JSON.stringify(data));
       if (hasLogined(socket)) {
-        var data = JSON.parse(data);  // string to object
+        data = json2object(data);  // string to object
         handleChat(socket, 'chat', data);
       }
       else {
