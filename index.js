@@ -89,7 +89,7 @@ function _send_event_to_client(message){
   }
 }
 
-var EVENT_LIST = ['invitation', 'book'];
+var EVENT_LIST = ['invitation', 'book', 'moment'];
 
 var eventSubClient = redis.createClient();
 var eventPubClient = redis.createClient();
