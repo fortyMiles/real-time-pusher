@@ -89,7 +89,7 @@ function _send_event_to_client(message){
   }
 }
 
-var event_list = ['invitation', 'book'];
+var EVENT_LIST = ['invitation', 'book'];
 
 var eventSubClient = redis.createClient();
 var eventPubClient = redis.createClient();
@@ -100,10 +100,10 @@ eventSubClient.select(2, function() { /* ... */ });
 eventSubClient.on("subscribe", function (channel, count) { /* ... */ });
 eventSubClient.on("message", function (channel, data) {
     var message = JSON.parse(data);
-    event_list.map(_send_event_to_client(message));
+    EVENT_LIST.map(_send_event_to_client(message));
 });
 
-event_list.map(event => eventSubClient.subscribe(event + "->"));
+EVENT_LIST.map(event => eventSubClient.subscribe(event + "->"));
 
 
 /******************** login ********************/
