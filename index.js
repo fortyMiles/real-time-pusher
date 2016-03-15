@@ -71,53 +71,41 @@ function sendChatUnreceiveMessages2Client(message) {
   }
 }
 
-/******************** book ***************************/
 
-var bookSubClient = redis.createClient();
-var bookPubClient = redis.createClient();
-
-
-bookSubClient.select(2, function() { /* ... */ });
-bookPubClient.select(2, function() { /* ... */ });
-
-bookSubClient.on("subscribe", function (channel, count) { /* ... */ });
-
-bookSubClient.on("message", function (channel, data) {
-    var message = JSON.parse(data);
-    console.log("BookEvent channel " + channel + ": " + data);
-    if (message['event'] == 'book') {
-      sendBookMessage2Client(message);
-    }
-});
-bookSubClient.subscribe("book->");
-
-function sendBookMessage2Client(message) {
-  var socket = getSocketByUserID(message['receiver_id']);
-  if (socket != null && hasLogined(socket)) {
-    socket.emit('book', JSON.stringify(message));
+var _send_event_message_to_client = function(event, message, receiver_id){
+  var socket = getSocketByUserID(receiver_id);
+  if(socket != null && hasLogined(socket)){
+    socket.emit(event, JSON.stringify(message));
   }
 }
 
-/******************** invitation ********************/
-var invSubClient = redis.createClient();
-var invPubClient = redis.createClient();
-invSubClient.select(2, function() { /* ... */ });
-invPubClient.select(2, function() { /* ... */ });
-invSubClient.on("subscribe", function (channel, count) { /* ... */ });
-invSubClient.on("message", function (channel, data) {
-    var message = JSON.parse(data);
-    console.log("invSubClient channel " + channel + ": " + data);
-    if (message['event'] == 'invitation') {
-      sendInvMessage2Client(message);
+function _send_event_to_client(message){
+  return function(event){
+    if(message.event == event){
+      debugger;
+      console.log(event + " message: " + message);
+      _send_event_message_to_client(event, message, message.receiver_id);
     }
-});
-invSubClient.subscribe("invitation->");
-function sendInvMessage2Client(message) {
-  var socket = getSocketByUserID(message['receiver_id']);
-  if (socket != null && hasLogined(socket)) {
-    socket.emit('invitation', JSON.stringify(message));
   }
 }
+
+var event_list = ['invitation', 'book'];
+
+var eventSubClient = redis.createClient();
+var eventPubClient = redis.createClient();
+
+eventSubClient.select(2, function() { /* ... */ });
+eventSubClient.select(2, function() { /* ... */ });
+
+eventSubClient.on("subscribe", function (channel, count) { /* ... */ });
+eventSubClient.on("message", function (channel, data) {
+    var message = JSON.parse(data);
+    event_list.map(_send_event_to_client(message));
+});
+
+event_list.map(event => eventSubClient.subscribe(event + "->"));
+
+
 /******************** login ********************/
 var loginSubClient = redis.createClient();
 var loginPubClient = redis.createClient();
