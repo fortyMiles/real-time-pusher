@@ -144,18 +144,22 @@ loginSubClient.on("message", function (channel, data) {
     var message = json2object(data);
     console.log("loginSubClient channel " + channel + ": " + data);
     if (message['event'] == 'login' && message['login']) {
+      console.log('user ' + message['receiver_id'] + ' login success');
       var socket = popStashSocketByUserID(message['receiver_id']);
       loginSocket(socket, message['receiver_id']);
       sendLoginMessage2Client(message);
     }
     else {
-      sendLoginMessage2Client(message);
+      console.log('user ' + message['receiver_id'] + ' login fail');
+      var socket = popStashSocketByUserID(message['receiver_id']);
+      logoutSocket(socket);
     }
 });
 loginSubClient.subscribe(TAG + ":login->");
 function sendLoginMessage2Client(message) {
   var socket = getSocketByUserID(message['receiver_id']);
   if (socket != null) {
+    console.log('send login event message to socket ' + socket.id + ': ' + JSON.stringify(message));
     socket.emit('login', JSON.stringify(message));
   }
 }
@@ -185,6 +189,7 @@ function delSocket(socket) {
     delete socketDicts[socket.id];
   }
   console.log('all userSockets: ' + JSON.stringify(userSockets));
+  // console.log('all socketDicts: ' + JSON.stringify(socketDicts));
 }
 function delStashSocket(socket) {
   var socketInfo = socketDicts[socket.id];
@@ -193,6 +198,7 @@ function delStashSocket(socket) {
     delete socketDicts[socket.id];
   }
   console.log('all userStashSockets: ' + JSON.stringify(userSockets));
+  // console.log('all socketDicts: ' + JSON.stringify(socketDicts));
 }
 // function clearSocket(socket) {
 //   var socketInfo = socketDicts[socket.id];
@@ -239,28 +245,34 @@ function stashUserSocket(socket, userID) {
   userStashSockets[userID] = socket.id;
   socketDicts[socket.id] = {'socket': socket};
 }
+function logoutSocket(socket, userID) {
+  // 使其他socket退出登录
+  if (socket) {
+    console.log('delete socket ' + socket.id + ' of user ' + userID);
+    socket.emit('login', JSON.stringify({'event':'login', 'login':false, 'receiver_id':userID}));
+    delSocket(socket);
+  }
+}
 function loginSocket(socket, userID) {
   if (!socket)
     return;
   var oldSocket = getSocketByUserID(userID);
   if (oldSocket && oldSocket != socket) {
-    // 使其他socket退出登录
-    console.log('delete old socket ' + oldSocket.id + ' of user ' + userID);
-    oldSocket.emit('login', JSON.stringify({'event':'login', 'login':false, 'receiver_id':userID}));
-    delSocket(oldSocket);
+    logoutSocket(oldSocket, userID);
   }
   userSockets[userID] = socket.id;
-  var socketInfo = socketDicts[socket.id];
-  if (!socketInfo) {
+  // var socketInfo = socketDicts[socket.id];
+  // if (!socketInfo) {
     socketDicts[socket.id] = {'socket': socket, 'login': true, 'user_id': userID};
-  }
-  if (socketInfo) {
-    socketInfo['login'] = true;
-    socketInfo['user_id'] = userID;
+  // }
+  // if (socketInfo) {
+    // socketInfo['login'] = true;
+    // socketInfo['user_id'] = userID;
     // 获取未读消息
     // getUnreceivedMessages(socket, userID);
-  }
+  // }
   console.log('all userSockets: ' + JSON.stringify(userSockets));
+  // console.log('all socketDicts: ' + JSON.stringify(socketDicts));
 }
 function hasLogined(socket) {
   var socketInfo = socketDicts[socket.id];
