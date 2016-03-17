@@ -126,7 +126,7 @@ loginSubClient.on("message", function (channel, data) {
     var message = json2object(data);
     console.log("loginSubClient channel " + channel + ": " + data);
     if (message['event'] == 'login' && message['login']) {
-      var socket = getSocketByUserID(message['receiver_id']);
+      var socket = popStashSocketByUserID(message['receiver_id']);
       loginSocket(socket, message['receiver_id']);
       sendLoginMessage2Client(message);
     }
@@ -152,6 +152,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var socketDicts = {};  // 通过socket.id来索引socket信息
 var userSockets = {};  // 通过user_id来索引socket.id
+var userStashSockets = {};
 function addSocket(socket) {
   if (!socketDicts[socket.id]) {
     socketDicts[socket.id] = {'socket': socket};
@@ -167,14 +168,22 @@ function delSocket(socket) {
   }
   console.log('all userSockets: ' + JSON.stringify(userSockets));
 }
-function clearSocket(socket) {
+function delStashSocket(socket) {
   var socketInfo = socketDicts[socket.id];
   if (socketInfo) {
-    delete userSockets[socketInfo['user_id']];
+    delete userStashSockets[socketInfo['user_id']];
+    delete socketDicts[socket.id];
   }
-  socketDicts[socket.id] = {'socket': socket};
-  console.log('all userSockets: ' + JSON.stringify(userSockets));
+  console.log('all userStashSockets: ' + JSON.stringify(userSockets));
 }
+// function clearSocket(socket) {
+//   var socketInfo = socketDicts[socket.id];
+//   if (socketInfo) {
+//     delete userSockets[socketInfo['user_id']];
+//   }
+//   socketDicts[socket.id] = {'socket': socket};
+//   console.log('all userSockets: ' + JSON.stringify(userSockets));
+// }
 function getSocketBySocketID(socketID) {
   var socketInfo = socketDicts[socketID];
   if (socketInfo) {
@@ -189,25 +198,49 @@ function getSocketByUserID(userID) {
   }
   return null;
 }
-function trackUserSocket(socket, userID) {
-  var oldSocket = getSocketByUserID(userID);
-  if (oldSocket && oldSocket != socket) {
-    delSocket(oldSocket);
+function getStashSocketByUserID(userID) {
+  var socketID = userStashSockets[userID];
+  if (socketID) {
+    return getSocketBySocketID(socketID);
   }
-  userSockets[userID] = socket.id;
+  return null;
+}
+function popStashSocketByUserID(userID) {
+  var socketID = userStashSockets[userID];
+  if (socketID) {
+    delete userStashSockets[userID];
+    return getSocketBySocketID(socketID);
+  }
+  return null;
+}
+function stashUserSocket(socket, userID) {
+  var oldSocket = getStashSocketByUserID(userID);
+  if (oldSocket && oldSocket != socket) {
+    delStashSocket(oldSocket);
+  }
+  userStashSockets[userID] = socket.id;
+  socketDicts[socket.id] = {'socket': socket};
 }
 function loginSocket(socket, userID) {
   if (!socket)
     return;
+  var oldSocket = getSocketByUserID(userID);
+  if (oldSocket && oldSocket != socket) {
+    // 使其他socket退出登录
+    console.log('delete old socket ' + oldSocket.id + ' of user ' + userID);
+    oldSocket.emit('login', JSON.stringify({'event':'login', 'login':false, 'receiver_id':userID}));
+    delSocket(oldSocket);
+  }
+  userSockets[userID] = socket.id;
   var socketInfo = socketDicts[socket.id];
   if (!socketInfo) {
-    socketDicts[socket.id] = {'socket': socket};
+    socketDicts[socket.id] = {'socket': socket, 'login': true, 'user_id': userID};
   }
   if (socketInfo) {
     socketInfo['login'] = true;
     socketInfo['user_id'] = userID;
     // 获取未读消息
-    getUnreceivedMessages(socket, userID);
+    // getUnreceivedMessages(socket, userID);
   }
   console.log('all userSockets: ' + JSON.stringify(userSockets));
 }
@@ -242,9 +275,8 @@ function hasChannel(socket, channel) {
 function handleLogin(socket, channel, data) {
   console.log('[handleLogin] socket ' + socket.id + ' on channel ' + 
     channel + ' receive data:' + JSON.stringify(data));
-  clearSocket(socket);
   if (data['user_id']) {
-    trackUserSocket(socket, data['user_id']);
+    stashUserSocket(socket, data['user_id']);
     pubLoginMessage2Server(data);
   }
   else {
