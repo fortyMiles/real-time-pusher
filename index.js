@@ -1,3 +1,21 @@
+var PORT = 9876;
+var TAG = 'dev';
+var REDIS_DB = 2;
+process.argv.forEach(function (val, index, array) {
+  if (index == 2) {
+    PORT = val;
+  }
+  else if (index == 3) {
+    TAG = val;
+  }
+  else if (index == 4) {
+    REDIS_DB = val;
+  }
+});
+console.log('PORT: ' + PORT);
+console.log('TAG: ' + TAG);
+
+
 /*********************
 * utility functions 
 *********************/
@@ -15,8 +33,8 @@ function json2object(data) {
 var redis = require("redis");
 var chatSubClient = redis.createClient();
 var chatPubClient = redis.createClient();
-chatSubClient.select(2, function() { /* ... */ });
-chatPubClient.select(2, function() { /* ... */ });
+chatSubClient.select(REDIS_DB, function() { /* ... */ });
+chatPubClient.select(REDIS_DB, function() { /* ... */ });
 chatSubClient.on("subscribe", function (channel, count) { /* ... */ });
 chatSubClient.on("message", function (channel, data) {
     var message = json2object(data);
@@ -29,9 +47,9 @@ chatSubClient.on("message", function (channel, data) {
       sendChatUnreceiveMessages2Client(message);
     }
 });
-chatSubClient.subscribe("chat->");
+chatSubClient.subscribe(TAG + ":chat->");
 function pubChatMessage2Server(message) {
-  chatPubClient.publish("->chat", JSON.stringify(message));
+  chatPubClient.publish(TAG + ":->chat", JSON.stringify(message));
 }
 function echoChatMessage2Client(message) {
   var socket = getSocketByUserID(message['sender_id']);
@@ -104,8 +122,8 @@ var EVENT_LIST = ['invitation', 'book', 'moment'];
 var eventSubClient = redis.createClient();
 var eventPubClient = redis.createClient();
 
-eventSubClient.select(2, function() { /* ... */ });
-eventSubClient.select(2, function() { /* ... */ });
+eventSubClient.select(REDIS_DB, function() { /* ... */ });
+eventSubClient.select(REDIS_DB, function() { /* ... */ });
 
 eventSubClient.on("subscribe", function (channel, count) { /* ... */ });
 eventSubClient.on("message", function (channel, data) {
@@ -113,14 +131,14 @@ eventSubClient.on("message", function (channel, data) {
     EVENT_LIST.map(_send_event_to_client(message));
 });
 
-EVENT_LIST.map(event => eventSubClient.subscribe(event + "->"));
+EVENT_LIST.map(event => eventSubClient.subscribe(TAG + ':' + event + "->"));
 
 
 /******************** login ********************/
 var loginSubClient = redis.createClient();
 var loginPubClient = redis.createClient();
-loginSubClient.select(2, function() { /* ... */ });
-loginPubClient.select(2, function() { /* ... */ });
+loginSubClient.select(REDIS_DB, function() { /* ... */ });
+loginPubClient.select(REDIS_DB, function() { /* ... */ });
 loginSubClient.on("subscribe", function (channel, count) { /* ... */ });
 loginSubClient.on("message", function (channel, data) {
     var message = json2object(data);
@@ -134,7 +152,7 @@ loginSubClient.on("message", function (channel, data) {
       sendLoginMessage2Client(message);
     }
 });
-loginSubClient.subscribe("login->");
+loginSubClient.subscribe(TAG + ":login->");
 function sendLoginMessage2Client(message) {
   var socket = getSocketByUserID(message['receiver_id']);
   if (socket != null) {
@@ -142,7 +160,7 @@ function sendLoginMessage2Client(message) {
   }
 }
 function pubLoginMessage2Server(message) {
-  loginPubClient.publish("->login", JSON.stringify(message));
+  loginPubClient.publish(TAG + ":->login", JSON.stringify(message));
 }
 /*********************
 * socketIO handlers 
@@ -327,6 +345,6 @@ io.on('connection', function(socket) {
     });
   }
 });
-http.listen(9876, function(){
-  console.log('listening on *:9876');
+http.listen(PORT, function(){
+  console.log('listening on *:' + PORT);
 });
