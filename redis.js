@@ -23,13 +23,14 @@ event_sub_client.on("message", function (channel, data) {
 	SOCKETS.send_message(message, message.event);
 });
 
-var EVENTS = ['login', 'invitation', 'book', 'moment'];
+var EVENTS = ['login', 'invitation', 'book', 'moment', 'chat'];
 EVENTS.forEach(event => event_sub_client.subscribe(TAG + ':' + event + "->"));  
 // subscribe those events.
 // just sub those events, so when receive redis messages, needn't to check if this event is valid.
 
 const PUB_EVENTS = {
 	LOGIN: 'login',
+	CHAT: 'chat',
 }; // define which events could be pub.
 
 var pub_an_event = function(event){
@@ -40,6 +41,11 @@ var pub_login_message_to_server = function(data){
 	pub_an_event(PUB_EVENTS.LOGIN)(data);
 };
 
+var pub_chat_message_to_server = function(data){
+	pub_an_event(PUB_EVENTS.CHAT)(data);
+};
+
 module.exports = {
 	pub_login_message_to_server: pub_login_message_to_server,
+	pub_chat_message_to_server: pub_chat_message_to_server,
 };

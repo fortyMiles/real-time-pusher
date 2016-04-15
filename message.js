@@ -3,6 +3,7 @@
  * @ Author: Minchiuan 2016-4-11
  */
 
+var conf = require('./configuration.js');
 var Message = function(id, content, receiver_id, event){
     this.id = id;
     this.createdDate = Date.now();
@@ -22,9 +23,14 @@ Message.prototype.is_overdate = function(){
 }
 
 var messages = {};
+
 var save_to_cache = function(id, content, receiver_id, event){
 	var msg = new Message(id, content, receiver_id, event);
 	if(messages.hasOwnProperty(receiver_id)){
+		if(messages[receiver_id].length >= conf.max_offline_message_num){
+			messages[receiver_id].shift(); 
+			// if length larger than max length, delete first element.
+		}
 		messages[receiver_id].push(msg);
 	}else{
 		messages[receiver_id] = [msg];

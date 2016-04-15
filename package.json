@@ -3,17 +3,20 @@
   "version": "0.0.1",
   "description": "my first socket.io app",
   "scripts": {
-    "dev": "nodemon --debug index.js",
+    "dev": "concurrent \"npm run serve\" \"npm run inspect\"",
+    "serve": "nodemon --debug index.js",
     "inspect": "node-inspector"
   },
   "dependencies": {
     "express": "4.10.2",
+    "queue": "^3.1.0",
     "ramda": "^0.21.0",
     "redis": "^2.4.2",
     "socket.io": "1.2.0",
     "socket.io-client": "^1.4.5"
   },
   "devDependencies": {
+    "concurrently": "^2.0.0",
     "node-inspector": "^0.12.8",
     "nodemon": "^1.9.1"
   }

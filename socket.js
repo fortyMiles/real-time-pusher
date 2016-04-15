@@ -21,7 +21,6 @@ Socket.prototype.emit = function(event, message){
 		this.socket.emit(event, JSON.stringify(message));
 		return true;
 	}else{
-		debugger;
 		offline.add_an_offline_msg(
 			id=message.uid,
 			content=message,

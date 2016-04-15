@@ -23,7 +23,6 @@
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
 	<script>
 var socket = io();
-var events = ['login', 'chat'];
 
 var send_echo = function(msg){
 	const ECHO = 'echo'; // define the echo event when receive msg.
@@ -34,6 +33,7 @@ $('form').submit(function(){
 	try {
 		s = $('#m').val();
 		o = JSON.parse(s);
+	    var events = ['login', 'chat'];
 		if (events.indexOf(o['event']) != -1) {
 			socket.emit(o['event'], s);
 		}
@@ -49,7 +49,7 @@ $('form').submit(function(){
 	}
 });
 
-var EVENTS = ['login', 'invitation', 'book', 'moment'];
+var EVENTS = ['chat', 'login', 'invitation', 'book', 'moment'];
 EVENTS.forEach(function(event){
 	socket.on(event, function(msg){
 		send_echo(msg);

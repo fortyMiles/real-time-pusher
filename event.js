@@ -9,6 +9,7 @@
 var account = require('./account.js');
 var Socket = require('./socket.js').Socket;
 var utility = require('./utility.js');
+var chat = require('./chat.js');
 var _ = require('ramda');
 
 /*********** Event Configration **************/
@@ -16,9 +17,10 @@ const EVENTS_FUNC = [
 	//['echo', login], 
     //['chat', login],
 	['login', account.login],
+	['chat', chat.chat]
 ];
 
-var VALID_EVENTS = ['login', 'invitation', 'book', 'moment'];
+var VALID_EVENTS = ['login', 'invitation', 'book', 'moment', 'chat'];
 
 function check_event_is_valid(event){
 	return VALID_EVENTS.filter(e => e == event).length > 0;
