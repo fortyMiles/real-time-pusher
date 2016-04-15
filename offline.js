@@ -18,7 +18,16 @@ var add_an_offline_msg = function(receiver_id, content){
 
 var send_offline_message = function(receiver_id, send_func){
 	var offline_messages = get_offline_messages(receiver_id);
-	offline_messages.map(m => send_func(m.receiver_id, m.event, m));
+	//offline_messages.forEach( m=> send_func(m.receiver_id, m.event, m));
+	for(var i = 0; i < offline_messages.length; i++){
+		var m = offline_messages[i];
+		if(!m){
+			throw 'msg cannot be null!';
+		}else{
+			send_func(m.receiver_id, m.event, m);
+		}
+	}
+	//offline_messages.forEach(m => send_func(m.receiver_id, m.event, m));
 }
 
 module.exports = {

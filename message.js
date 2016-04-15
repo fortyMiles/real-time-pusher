@@ -21,7 +21,11 @@ var save_to_cache = function(receiver_id, msg){
 };
 
 var get_cached_messages = function(receiver_id){
-    return messages[receiver_id] || [];
+	var results = [];
+	if(messages[receiver_id]){
+	     results = messages[receiver_id].map(e=>e)
+	}
+    return results;
 };
 
 var delete_cached_messages = function(receiver_id, mid){

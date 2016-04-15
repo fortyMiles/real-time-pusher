@@ -17,16 +17,22 @@ Socket.prototype.send_error_msg = function(msg){
 };
 
 Socket.prototype.emit = function(event, message){
+	if(!message){
+		throw 'msg cannot be null';
+	}
+
 	if(this.connected() && this.login ){
 		this.socket.emit(event, JSON.stringify(message));
 		offline.delete_offline_msg(message.receiver_id, message.mid);
 		// remove this message from offline, if it in.
+		console.log('print message: ' + event + ' : ' + message);
 		return true;
 	}else{
 		offline.add_an_offline_msg(
 			receiver_id=message.receiver_id,
 			content=message
 		);
+		console.log('save a offline message: ' + event + ' : ' + message);
 		return false;
 	}
 };
