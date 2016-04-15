@@ -1,0 +1,33 @@
+{
+    "event": "login",
+    "user_id": "4560cbcf0d4c47378f45fb6c4bb1e4f8",
+    "token": "c93a9c8784bcc978fe5b1d2c45ab3d4f"
+}
+
+{
+    "event": "login",
+    "user_id": "1724cfb32df441bd800eed318c74a1d5",
+    "token": "2bc37f4dbdd1acc83855ba2a41ab6d95"
+}
+
+{
+    "event": "chat",
+    "sub_event": "p2p",
+    "sender_id": "4560cbcf0d4c47378f45fb6c4bb1e4f8",
+    "receiver_id": "1724cfb32df441bd800eed318c74a1d5",
+    "content_type": "text",
+    "content": {
+        "text": "hello father"
+    }
+}
+
+{
+    "event": "chat",
+    "sub_event": "p2p",
+    "sender_id": "1724cfb32df441bd800eed318c74a1d5",
+    "receiver_id": "4560cbcf0d4c47378f45fb6c4bb1e4f8",
+    "content_type": "text",
+    "content": {
+        "text": "hello father"
+    }
+}
