@@ -13,14 +13,16 @@ var chat = require('./chat.js');
 var _ = require('ramda');
 
 /*********** Event Configration **************/
-const EVENTS_FUNC = [
-	//['echo', login], 
-    //['chat', login],
-	['login', account.login],
-	['chat', chat.chat]
+
+const LOGIN = 'login';
+const CHAT = 'chat';
+
+const CLIENT_EVENTS_FUNC = [ // client send to server, the func to process.
+	[LOGIN, account.login], 
+	[CHAT, chat.chat]
 ];
 
-var VALID_EVENTS = ['login', 'invitation', 'book', 'moment', 'chat'];
+var VALID_EVENTS = [LOGIN, CHAT, 'invitation', 'book', 'moment'];
 
 function check_event_is_valid(event){
 	return VALID_EVENTS.filter(e => e == event).length > 0;
@@ -50,7 +52,7 @@ function _check_if_be_called(socket, event_func){
 var handle_event = function(socket){
 	USER_SOCKET = socket;
 	var check_if_event_be_called_on_this_socekt = _.curry(_check_if_be_called)(USER_SOCKET);
-	EVENTS_FUNC.forEach(check_if_event_be_called_on_this_socekt);
+	CLIENT_EVENTS_FUNC.forEach(check_if_event_be_called_on_this_socekt);
 	// check each event if has been called.
 };
 

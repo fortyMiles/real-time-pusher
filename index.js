@@ -9,12 +9,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var handle_event = require('./event.js').handle_event;
 var socket_table = require('./socket.js');
-
-var configuration = {
-	PORT: 9876,
-	TAG: 'dev',
-	REDIS_DB: 2
-}
+var conf = require('./configuration.js');
 
 app.get('/', function(req, res) {
 	res.sendFile(__dirname + '/index.html');
@@ -24,6 +19,6 @@ io.on('connection', function(socket){
 	handle_event(socket);
 });
 
-http.listen(configuration.PORT, function(){
-	console.log('listening on *:' + configuration.PORT);
+http.listen(conf.env.PORT, function(){
+	console.log('listening on *:' + conf.env.PORT);
 });

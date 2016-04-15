@@ -7,8 +7,8 @@
 var redis = require('redis');
 var SOCKETS = require('./socket.js');
 var utility = require('./utility.js');
-const REDIS_DB = 2;
-var TAG = 'dev';
+var conf = require('./configuration.js');
+const REDIS_DB = conf.env.REDIS_DB || 1;
 
 var event_sub_client = redis.createClient();
 var event_pub_client = redis.createClient();
@@ -23,15 +23,17 @@ event_sub_client.on("message", function (channel, data) {
 	SOCKETS.send_message(message, message.event);
 });
 
-var EVENTS = ['login', 'invitation', 'book', 'moment', 'chat'];
-EVENTS.forEach(event => event_sub_client.subscribe(TAG + ':' + event + "->"));  
+var SUB_EVENTS = ['login', 'invitation', 'book', 'moment', 'chat'];
+
+var TAG = conf.env.TAG || '';
+SUB_EVENTS.forEach(event => event_sub_client.subscribe(TAG + ':' + event + "->"));  
 // subscribe those events.
 // just sub those events, so when receive redis messages, needn't to check if this event is valid.
 
 const PUB_EVENTS = {
 	LOGIN: 'login',
 	CHAT: 'chat',
-}; // define which events could be pub.
+};
 
 var pub_an_event = function(event){
 	return message => event_pub_client.publish(TAG + ":->" + event, JSON.stringify(message));

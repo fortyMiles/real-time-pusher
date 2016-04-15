@@ -4,28 +4,10 @@
  */
 
 var conf = require('./configuration.js');
-var Message = function(id, content, receiver_id, event){
-    this.id = id;
-    this.createdDate = Date.now();
-    this.read = false;
-    this.content = content;
-    this.receiver_id = receiver_id;
-	this.event = event;
-}
-
-Message.prototype.set_read = function(){
-    this.read = true;
-}
-
-Message.prototype.is_overdate = function(){
-    const DELTA_TIME = 10;
-	return Number(Date.now() - this.createDate) > DELTA_TIME;
-}
 
 var messages = {};
 
-var save_to_cache = function(id, content, receiver_id, event){
-	var msg = new Message(id, content, receiver_id, event);
+var save_to_cache = function(receiver_id, msg){
 	if(messages.hasOwnProperty(receiver_id)){
 		if(messages[receiver_id].length >= conf.max_offline_message_num){
 			messages[receiver_id].shift(); 
@@ -35,17 +17,28 @@ var save_to_cache = function(id, content, receiver_id, event){
 	}else{
 		messages[receiver_id] = [msg];
 	}
-	console.log(receiver_id + ' get an offline msg ' +  event);
+	console.log(receiver_id + ' get an offline msg ' +  msg.event);
 };
 
 var get_cached_messages = function(receiver_id){
     return messages[receiver_id] || [];
 };
 
+var delete_cached_messages = function(receiver_id, mid){
+    if(messages[receiver_id]){
+		for(var i = 0; i < messages[receiver_id].length; i++){
+			if(messages[receiver_id][i].mid == mid){
+			    messages[receiver_id].splice(i, 1);
+			}
+		};
+	}
+};
+
+
 module.exports = {
-	Message: Message,
 	save_to_cache: save_to_cache,
 	get_cached_messages: get_cached_messages,
+	delete_cached_messages: delete_cached_messages,
 }
 
 

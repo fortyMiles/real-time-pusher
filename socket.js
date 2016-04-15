@@ -19,13 +19,13 @@ Socket.prototype.send_error_msg = function(msg){
 Socket.prototype.emit = function(event, message){
 	if(this.connected() && this.login ){
 		this.socket.emit(event, JSON.stringify(message));
+		offline.delete_offline_msg(message.receiver_id, message.mid);
+		// remove this message from offline, if it in.
 		return true;
 	}else{
 		offline.add_an_offline_msg(
-			id=message.uid,
-			content=message,
 			receiver_id=message.receiver_id,
-			event=event
+			content=message
 		);
 		return false;
 	}
@@ -77,7 +77,10 @@ var send_message_to_socket = function(receiver_id, event, message){
 		client_socket.emit(event, message);
 	}else{ // not in, save message into offline.
 		console.log('this socket is not registered in system: ' + receiver_id);
-		offline.add_an_offline_msg(message.uid, message, message.receiver_id, event);
+		offline.add_an_offline_msg(
+			receiver_id=message.receiver_id,
+			content=message
+		);
 	}
 };
 
