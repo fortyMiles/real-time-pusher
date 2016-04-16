@@ -17,6 +17,17 @@ console.log('TAG: ' + TAG);
 
 
 /*********************
+* log 
+*********************/
+var log4js = require('log4js');
+log4js.loadAppender('file');
+log4js.addAppender(log4js.appenders.file('logs/pusher.log'), 'pusher');
+
+var logger = log4js.getLogger('pusher');
+logger.setLevel('DEBUG');
+
+
+/*********************
 * utility functions 
 *********************/
 function json2object(data) {
@@ -38,7 +49,7 @@ chatPubClient.select(REDIS_DB, function() { /* ... */ });
 chatSubClient.on("subscribe", function (channel, count) { /* ... */ });
 chatSubClient.on("message", function (channel, data) {
     var message = json2object(data);
-    console.log("chatSubClient channel " + channel + ": " + JSON.stringify(data));
+    logger.info("chatSubClient channel " + channel + ": " + JSON.stringify(data));
     if (message['event'] == 'chat') {
       sendChatMessage2Client(message);  // 发送消息给receiver
       echoChatMessage2Client(message);  // 回复sender消息已接收到
@@ -111,7 +122,7 @@ var _send_event_message_to_client = function(event, message, receiver_id){
 function _send_event_to_client(message){
   return function(event){
     if(message.event == event){
-      console.log(event + " message: " + JSON.stringify(message));
+      logger.info(event + " message: " + JSON.stringify(message));
       _send_event_message_to_client(event, message, message.receiver_id);
     }
   }
@@ -142,15 +153,15 @@ loginPubClient.select(REDIS_DB, function() { /* ... */ });
 loginSubClient.on("subscribe", function (channel, count) { /* ... */ });
 loginSubClient.on("message", function (channel, data) {
     var message = json2object(data);
-    console.log("loginSubClient channel " + channel + ": " + data);
+    logger.info("loginSubClient channel " + channel + ": " + data);
     if (message['event'] == 'login' && message['login']) {
-      console.log('user ' + message['receiver_id'] + ' login success');
+      logger.info('user ' + message['receiver_id'] + ' login success');
       var socket = popStashSocketByUserID(message['receiver_id']);
       loginSocket(socket, message['receiver_id']);
       sendLoginMessage2Client(message);
     }
     else {
-      console.log('user ' + message['receiver_id'] + ' login fail');
+      logger.info('user ' + message['receiver_id'] + ' login fail');
       var socket = popStashSocketByUserID(message['receiver_id']);
       logoutSocket(socket);
     }
@@ -159,7 +170,7 @@ loginSubClient.subscribe(TAG + ":login->");
 function sendLoginMessage2Client(message) {
   var socket = getSocketByUserID(message['receiver_id']);
   if (socket != null) {
-    console.log('send login event message to socket ' + socket.id + ': ' + JSON.stringify(message));
+    logger.info('send login event message to socket ' + socket.id + ': ' + JSON.stringify(message));
     socket.emit('login', JSON.stringify(message));
   }
 }
@@ -188,8 +199,8 @@ function delSocket(socket) {
     delete userSockets[socketInfo['user_id']];
     delete socketDicts[socket.id];
   }
-  console.log('all userSockets: ' + JSON.stringify(userSockets));
-  // console.log('all socketDicts: ' + JSON.stringify(socketDicts));
+  logger.info('all userSockets: ' + JSON.stringify(userSockets));
+  // logger.info('all socketDicts: ' + JSON.stringify(socketDicts));
 }
 function delStashSocket(socket) {
   var socketInfo = socketDicts[socket.id];
@@ -197,8 +208,8 @@ function delStashSocket(socket) {
     delete userStashSockets[socketInfo['user_id']];
     delete socketDicts[socket.id];
   }
-  console.log('all userStashSockets: ' + JSON.stringify(userSockets));
-  // console.log('all socketDicts: ' + JSON.stringify(socketDicts));
+  logger.info('all userStashSockets: ' + JSON.stringify(userSockets));
+  // logger.info('all socketDicts: ' + JSON.stringify(socketDicts));
 }
 // function clearSocket(socket) {
 //   var socketInfo = socketDicts[socket.id];
@@ -206,7 +217,7 @@ function delStashSocket(socket) {
 //     delete userSockets[socketInfo['user_id']];
 //   }
 //   socketDicts[socket.id] = {'socket': socket};
-//   console.log('all userSockets: ' + JSON.stringify(userSockets));
+//   logger.info('all userSockets: ' + JSON.stringify(userSockets));
 // }
 function getSocketBySocketID(socketID) {
   var socketInfo = socketDicts[socketID];
@@ -248,7 +259,7 @@ function stashUserSocket(socket, userID) {
 function logoutSocket(socket, userID) {
   // 使其他socket退出登录
   if (socket) {
-    console.log('delete socket ' + socket.id + ' of user ' + userID);
+    logger.info('delete socket ' + socket.id + ' of user ' + userID);
     socket.emit('login', JSON.stringify({'event':'login', 'login':false, 'receiver_id':userID}));
     delSocket(socket);
   }
@@ -271,8 +282,8 @@ function loginSocket(socket, userID) {
     // 获取未读消息
     // getUnreceivedMessages(socket, userID);
   // }
-  console.log('all userSockets: ' + JSON.stringify(userSockets));
-  // console.log('all socketDicts: ' + JSON.stringify(socketDicts));
+  logger.info('all userSockets: ' + JSON.stringify(userSockets));
+  // logger.info('all socketDicts: ' + JSON.stringify(socketDicts));
 }
 function hasLogined(socket) {
   var socketInfo = socketDicts[socket.id];
@@ -303,7 +314,7 @@ function hasChannel(socket, channel) {
   return false;
 }
 function handleLogin(socket, channel, data) {
-  console.log('[handleLogin] socket ' + socket.id + ' on channel ' + 
+  logger.info('[handleLogin] socket ' + socket.id + ' on channel ' + 
     channel + ' receive data:' + JSON.stringify(data));
   if (data['user_id']) {
     stashUserSocket(socket, data['user_id']);
@@ -315,7 +326,7 @@ function handleLogin(socket, channel, data) {
   }
 }
 function handleChat(socket, channel, data) {
-  console.log('[handleChat] socket ' + socket.id + ' on channel ' + 
+  logger.info('[handleChat] socket ' + socket.id + ' on channel ' + 
     channel + ' receive data:' + JSON.stringify(data));
   pubChatMessage2Server(data);
 }
@@ -331,15 +342,15 @@ app.get('/', function(req, res) {
   res.sendFile(__dirname + '/index.html');
 });
 io.on('connection', function(socket) {
-  console.log('socket ' + socket.id + ' connected')
+  logger.info('socket ' + socket.id + ' connected')
   if (addSocket(socket)) {
     socket.on('login', function(data) {
       data = json2object(data);  // string to object
-      console.log('socket ' + socket.id + ' login event data:' + JSON.stringify(data));
+      logger.info('socket ' + socket.id + ' login event data:' + JSON.stringify(data));
       handleLogin(socket, 'login', data);
     });
     socket.on('chat', function(data) {
-      console.log('socket ' + socket.id + ' chat event data:' + JSON.stringify(data));
+      logger.info('socket ' + socket.id + ' chat event data:' + JSON.stringify(data));
       if (hasLogined(socket)) {
         data = json2object(data);  // string to object
         handleChat(socket, 'chat', data);
@@ -352,9 +363,11 @@ io.on('connection', function(socket) {
     addChannel2Socket(socket, 'chat');
     /* handler disconnection */
     socket.on('disconnect', function() {
-      console.log('socket ' + socket.id + ' disconnected');
+      logger.info('socket ' + socket.id + ' disconnected');
+      // socket.emit('lostconnect', JSON.stringify({'event': 'disconnect'}));
       delSocket(socket);
     });
+    // socket.setKeepAlive(true, 3600);
   }
 });
 http.listen(PORT, function(){
