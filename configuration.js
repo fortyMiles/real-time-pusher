@@ -13,14 +13,26 @@ const DEPLOY = {
 
 var ENV = {};
 
-const test = false;
-
-if(test){
-	ENV = DEV;
-}else{
-	ENV = DEPLOY;
+var in_server = function(){
+  var host_address = '121.40.158.110';
+  var os = require('os');
+  var networkInterface = os.networkInterfaces();
+  try{
+    if(networkInterface.eth1[0].address == host_address){
+      return true;
+    }
+  }catch(exception){
+    return false;
+  }
 }
 
+if(in_server()){
+	ENV = DEPLOY;
+}else{
+	ENV = DEV;;
+}
+
+;
 
 var VALID_PUB_CHANNLE = 
 module.exports = {
