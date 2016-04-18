@@ -15,52 +15,52 @@
   </head>
   <body>
     <ul id="messages" style="margin-bottom:100px"></ul>
+    <ul id="err" stylr="margin-bottom:100px"></ul>
     <form action="">
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
-    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-    <script>
-      var socket = io();
-      var events = ['login', 'chat'];
-      $('form').submit(function(){
-        try {
-          s = $('#m').val();
-          o = JSON.parse(s);
-          if (events.indexOf(o['event']) != -1) {
-            socket.emit(o['event'], s);
-          }
-          else {
-            throw 'unrecognized event ' + o['event'];
-          }
-          $('#m').val('');
-          return false;
-        }
-        catch (e) {
-          console.error(e);
-          return false;
-        }
-      });
-      socket.on('login', function(msg){
-        console.log(msg);
-        $('#messages').append($('<li>').text('[login response] ' + msg));
-      });
-      socket.on('chat', function(msg){
-        console.log(msg);
-        $('#messages').append($('<li>').text('[chat response] ' + msg));
-      });
-      socket.on('invitation', function(msg){
-        console.log(msg);
-        $('#messages').append($('<li>').text('[invitation response] ' + msg));
-      });
-      socket.on('book', function(msg){
-        console.log(msg);
-        $('#messages').append($('<li>').text('[book response] ' + msg));
-      });
-      socket.on('moment', function(msg){
-        console.log(msg);
-        $('#messages').append($('<li>').text('[moment response] ' + msg));
-      });
-    </script>
+	<script>
+var socket = io();
+
+var send_echo = function(msg){
+	const ECHO = 'echo'; // define the echo event when receive msg.
+	socket.emit(ECHO, {uid: msg.uid});
+};
+
+$('form').submit(function(){
+	try {
+		s = $('#m').val();
+		o = JSON.parse(s);
+	    var events = ['login', 'chat'];
+		if (events.indexOf(o['event']) != -1) {
+			socket.emit(o['event'], s);
+		}
+		else {
+			throw 'unrecognized event ' + o['event'];
+		}
+		$('#m').val('');
+		return false;
+	}
+	catch (e) {
+		console.error(e);
+		return false;
+	}
+});
+
+var EVENTS = ['chat', 'login', 'invitation', 'book', 'moment'];
+EVENTS.forEach(function(event){
+	socket.on(event, function(msg){
+		send_echo(msg);
+		$('#messages').append($('<li>').text("[" + event + " response] " + msg));
+	});
+});
+
+socket.on('err', function(msg){
+	console.log('get error info');
+	$('#messages').append($('<li style="color: red;">').text('[error] ' + JSON.stringify(msg)));
+});
+	</script>
   </body>
 </html>
