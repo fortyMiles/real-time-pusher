@@ -1,4 +1,5 @@
 const MAX_OFFLINE_MESSAGE_NUM = 10;
+const REDIS_SUB_EVENTS = 'as12afzxjk@askfl';
 const DEV = {
 	PORT: 9876,
 	TAG: 'dev',
@@ -38,4 +39,5 @@ var VALID_PUB_CHANNLE =
 module.exports = {
 	max_offline_message_num: MAX_OFFLINE_MESSAGE_NUM,
 	env: ENV,
+	redis_sub_event: REDIS_SUB_EVENTS,
 };
