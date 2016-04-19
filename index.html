@@ -49,7 +49,7 @@ $('form').submit(function(){
 	}
 });
 
-var EVENTS = ['chat', 'login', 'invitation', 'book', 'moment'];
+var EVENTS = ['chat', 'login', 'invitation', 'book', 'moment', 'delete'];
 EVENTS.forEach(function(event){
 	socket.on(event, function(msg){
 		send_echo(msg);
