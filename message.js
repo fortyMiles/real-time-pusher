@@ -4,6 +4,7 @@
  */
 
 var conf = require('./configuration.js');
+var log = require('./log.js');
 
 var messages = {};
 
@@ -17,7 +18,7 @@ var save_to_cache = function(receiver_id, msg){
 	}else{
 		messages[receiver_id] = [msg];
 	}
-	console.log(receiver_id + ' get an offline msg ' +  msg.event);
+	log.save(log.ACTION.SAVE,'offline', message=JSON.stringify(msg));
 };
 
 var get_cached_messages = function(receiver_id){

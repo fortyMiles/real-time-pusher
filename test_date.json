@@ -6,8 +6,14 @@
 
 {
     "event": "login",
-    "user_id": "1724cfb32df441bd800eed318c74a1d5",
-    "token": "2bc37f4dbdd1acc83855ba2a41ab6d95"
+    "user_id": "b35024e4280b4a7ba9baf9c1a80a1c05",
+    "token": "2e8033dade2484d6c927c575dffcadb0"
+}
+
+{
+    "event": "login",
+    "user_id": "23bfee2c5a014308bf0166a2f6046b7d",
+    "token": "af89a0b8b48a0dff682f4b57a492b595"
 }
 
 {
@@ -31,3 +37,30 @@
         "text": "hello father"
     }
 }
+
+{
+    "group_id": "a2438b832b474a8ba8018781b39e4d66",
+    "invitee": "13777414593",
+    "role": "p-grandfather",
+    "message": "xxx"
+}
+
+
+
+// test for add invitation
+{
+    "event": "login",
+    "user_id": "d59455173ad64693877a4244bdc08024",
+    "token": "6c2b23cdf96f2586859e6d1fd848b49a"
+}
+
+invitee == "d59455173ad64693877a4244bdc08024"
+phone='"18857453003"
+token="6c2b23cdf96f2586859e6d1fd848b49a"
+
+
+inviter == "5b9212c74f324b028a68ce306e4f6b8b"
+phone="18857453004"
+token="997eb93aea78a55968c86d7f990f1cb8"
+
+

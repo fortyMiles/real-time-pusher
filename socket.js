@@ -6,6 +6,7 @@
 
 
 var offline = require('./offline.js');
+var log = require('./log.js');
 
 var Socket = function(socket){
 	this.socket = socket;
@@ -25,14 +26,14 @@ Socket.prototype.emit = function(event, message){
 		this.socket.emit(event, JSON.stringify(message));
 		offline.delete_offline_msg(message.receiver_id, message.mid);
 		// remove this message from offline, if it in.
-		console.log('print message: ' + event + ' : ' + message);
+		log.save(log.ACTION.SEND, 'socket', JSON.stringify(message));
 		return true;
 	}else{
 		offline.add_an_offline_msg(
 			receiver_id=message.receiver_id,
 			content=message
 		);
-		console.log('save a offline message: ' + event + ' : ' + message);
+		log.save(log.ACTION.SAVE, 'socket', JSON.stringify(message));
 		return false;
 	}
 };
@@ -82,7 +83,7 @@ var send_message_to_socket = function(receiver_id, event, message){
 	if(client_socket){ // if sockt in register table.
 		client_socket.emit(event, message);
 	}else{ // not in, save message into offline.
-		console.log('this socket is not registered in system: ' + receiver_id);
+		log.save(log.ACTION.WITHOUT, receiver_id);
 		offline.add_an_offline_msg(
 			receiver_id=message.receiver_id,
 			content=message
