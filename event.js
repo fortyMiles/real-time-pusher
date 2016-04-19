@@ -11,6 +11,7 @@ var Socket = require('./socket.js').Socket;
 var utility = require('./utility.js');
 var chat = require('./chat.js');
 var _ = require('ramda');
+var log = require('./log.js');
 
 /*********** Event Configration **************/
 
@@ -22,7 +23,7 @@ const CLIENT_EVENTS_FUNC = [ // client send to server, the func to process.
 	[CHAT, chat.chat]
 ];
 
-var VALID_EVENTS = [LOGIN, CHAT, 'invitation', 'book', 'moment'];
+var VALID_EVENTS = [LOGIN, CHAT, 'invitation', 'book', 'moment', 'delete'];
 
 function check_event_is_valid(event){
 	return VALID_EVENTS.filter(e => e == event).length > 0;
@@ -44,6 +45,7 @@ function _check_if_be_called(socket, event_func){
 	var self_socket = new Socket(socket);
 	
 	socket.on(event, function(data){
+		log.save(log.ACTION.RECEIVE, socket.id, JSON.stringify(data));
 		var data = utility.json2object(data);
 		process_func(self_socket, data);
 	});
