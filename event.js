@@ -8,6 +8,7 @@
 
 var account = require('./account.js');
 var Socket = require('./socket.js').Socket;
+var del_socket = require('./socket.js').del_socket;
 var utility = require('./utility.js');
 var chat = require('./chat.js');
 var _ = require('ramda');
@@ -17,16 +18,19 @@ var log = require('./log.js');
 
 const LOGIN = 'login';
 const CHAT = 'chat';
+const DISCONNECT = 'disconnect';
 
 const CLIENT_EVENTS_FUNC = [ // client send to server, the func to process.
 	[LOGIN, account.login], 
-	[CHAT, chat.chat]
+	[CHAT, chat.chat],
+	[DISCONNECT, del_socket]
 ];
 
 var VALID_EVENTS = [LOGIN, CHAT, 'invitation', 'book', 'moment', 'delete'];
 
-function check_event_is_valid(event){
-	return VALID_EVENTS.filter(e => e == event).length > 0;
+function is_valid_event(event){
+	// return VALID_EVENTS.filter(e => e == event).length > 0;
+	return VALID_EVENTS.indexOf(event) != -1;
 };
 
 var get_event = function(event_func_map){
@@ -45,7 +49,7 @@ function _check_if_be_called(socket, event_func){
 	var self_socket = new Socket(socket);
 	
 	socket.on(event, function(data){
-		log.save(log.ACTION.RECEIVE, socket.id, JSON.stringify(data));
+		log.save(log.ACTION.RECEIVE, self_socket.socket2str(), data);
 		var data = utility.json2object(data);
 		process_func(self_socket, data);
 	});
@@ -60,5 +64,5 @@ var handle_event = function(socket){
 
 module.exports = {
 	handle_event: handle_event,
-	check_event_is_valid: check_event_is_valid,
+	is_valid_event: is_valid_event,
 };

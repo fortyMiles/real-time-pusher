@@ -367,19 +367,19 @@ function hasChannel(socket, channel) {
 function handleLogin(socket, channel, data) {
 	console.log('[handleLogin] socket ' + socket.id + ' on channel ' + 
 				channel + ' receive data:' + JSON.stringify(data));
-				if (data['user_id']) {
-					stashUserSocket(socket, data['user_id']);
-					pubLoginMessage2Server(data);
-				}
-				else {
-					data['login'] = false;
-					socket.emit(channel, JSON.stringify(data));
-				}
+	if (data['user_id']) {
+		stashUserSocket(socket, data['user_id']);
+		pubLoginMessage2Server(data);
+	}
+	else {
+		data['login'] = false;
+		socket.emit(channel, JSON.stringify(data));
+	}
 }
 function handleChat(socket, channel, data) {
 	console.log('[handleChat] socket ' + socket.id + ' on channel ' + 
 				channel + ' receive data:' + JSON.stringify(data));
-				pubChatMessage2Server(data);
+	pubChatMessage2Server(data);
 }
 function getUnreceivedMessages(socket, receiver_id) {
 	var message = {

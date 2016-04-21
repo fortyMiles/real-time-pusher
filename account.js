@@ -14,8 +14,10 @@ var has_login = function(socket){
 	return true;
 }
 
+const LOGIN_FORMAT_ERROR_MESSAGE = {"event": "login", "login": false, "message": "wrong format"}
+const USER_ID = 'user_id';
+
 var check_format_okay = function(data){
-	const USER_ID = 'user_id';
 	return data.hasOwnProperty(USER_ID);
 };
 
@@ -24,7 +26,7 @@ var login = function(socket, data){
 		redis.pub_login_message_to_server(data);
 		SOCKETS.add_socket(data.user_id, socket, logined=false);
 	}else{
-		socket.send_error_msg(msg='msg unformatted');
+		socket.send_error_message(message=LOGIN_FORMAT_ERROR_MESSAGE);
 	}
 };
 

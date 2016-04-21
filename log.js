@@ -2,17 +2,21 @@ var actions = {
     START_ON: 'start-on',
     NEW_CONNECT: 'new-connect',
     SAVE: 'save',
-	RECEIVE: 'receive',
-	SEND: 'send',
-	DELETE: 'delete',
-	WITHOUT: 'without',
+    RECEIVE: 'receive',
+    SEND: 'send',
+    DELETE: 'delete',
+    WITHOUT: 'without',
+    ERROR: 'error'
 };
 
-var print_log = function(action, actor,  message){
+var print_log = function(action, actor, message){
   action = action || 'test';
   actor = actor || 'system';
   message = message || '';
-  console.log(action + '\t' + actor + '\t' + message + '\t' + new Date().toISOString());
+  if (typeof(message) != 'string') {
+     message = JSON.stringify(message);
+  }
+  console.log('[' + new Date().toISOString() + '] ' + action + ' ' + actor + ': ' + message);
 };
 
 module.exports = {

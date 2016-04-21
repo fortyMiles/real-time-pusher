@@ -24,9 +24,9 @@
 	<script>
 var socket = io();
 
-var send_echo = function(msg){
-	const ECHO = 'echo'; // define the echo event when receive msg.
-	socket.emit(ECHO, {uid: msg.uid});
+var send_echo = function(message){
+	const ECHO = 'echo'; // define the echo event when receive message.
+	socket.emit(ECHO, {uid: message.uid});
 };
 
 $('form').submit(function(){
@@ -51,15 +51,15 @@ $('form').submit(function(){
 
 var EVENTS = ['chat', 'login', 'invitation', 'book', 'moment', 'delete'];
 EVENTS.forEach(function(event){
-	socket.on(event, function(msg){
-		send_echo(msg);
-		$('#messages').append($('<li>').text("[" + event + " response] " + msg));
+	socket.on(event, function(message){
+		send_echo(message);
+		$('#messages').append($('<li>').text("[" + event + " response] " + message));
 	});
 });
 
-socket.on('err', function(msg){
+socket.on('error', function(message){
 	console.log('get error info');
-	$('#messages').append($('<li style="color: red;">').text('[error] ' + JSON.stringify(msg)));
+	$('#messages').append($('<li style="color: red;">').text('[error] ' + JSON.stringify(message)));
 });
 	</script>
   </body>

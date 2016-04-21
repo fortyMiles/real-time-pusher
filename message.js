@@ -8,17 +8,17 @@ var log = require('./log.js');
 
 var messages = {};
 
-var save_to_cache = function(receiver_id, msg){
+var save_to_cache = function(receiver_id, message){
 	if(messages.hasOwnProperty(receiver_id)){
 		if(messages[receiver_id].length >= conf.max_offline_message_num){
 			messages[receiver_id].shift(); 
 			// if length larger than max length, delete first element.
 		}
-		messages[receiver_id].push(msg);
+		messages[receiver_id].push(message);
 	}else{
-		messages[receiver_id] = [msg];
+		messages[receiver_id] = [message];
 	}
-	log.save(log.ACTION.SAVE,'offline', message=JSON.stringify(msg));
+	log.save(log.ACTION.SAVE, 'offline', message=JSON.stringify(message));
 };
 
 var get_cached_messages = function(receiver_id){
@@ -35,7 +35,7 @@ var delete_cached_messages = function(receiver_id, mid){
 			if(messages[receiver_id][i].mid == mid){
 			    messages[receiver_id].splice(i, 1);
 			}
-		};
+		}
 	}
 };
 

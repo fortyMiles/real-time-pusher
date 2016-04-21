@@ -44,12 +44,12 @@ var pub_an_event = function(event){
 
 var pub_login_message_to_server = function(data){
 	pub_an_event(PUB_EVENTS.LOGIN)(data);
-	log.save(log.ACTION.SEND, 'redis', 'login:'+data);
+	log.save(log.ACTION.SEND, 'redis', data);
 };
 
 var pub_chat_message_to_server = function(data){
 	pub_an_event(PUB_EVENTS.CHAT)(data);
-	log.save(log.ACTION.SEND, 'redis', 'chat:'+data);
+	log.save(log.ACTION.SEND, 'redis', data);
 };
 
 module.exports = {
