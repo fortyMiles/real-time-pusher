@@ -66,6 +66,7 @@ function get_receiver_socket_dict(the_sockets) {
 	for (var receiver_id in the_sockets) {
 		desc[receiver_id] = the_sockets[receiver_id].socket.id;
 	}
+    return desc;
 }
 
 var get_sockets_desc = function() {
