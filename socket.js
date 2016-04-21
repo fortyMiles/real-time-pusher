@@ -144,7 +144,7 @@ var set_socket_online = function(receiver_id){
 			del_socket_by_receiver_id(receiver_id);
 		}
 		socket.set_login();
-		add_socket(socket);
+		add_socket(receiver_id, socket);
 		return true;
 	}
 	return false;
@@ -165,6 +165,13 @@ var send_message_to_socket = function(receiver_id, event, message){
 	}
 };
 
+var send_message_to_stash_socket = function(receiver_id, event, message){
+	var client_socket = get_stash_socket(receiver_id);
+	if(client_socket) {
+		client_socket.emit(event, message);
+	}
+};
+
 const LOGIN = 'login';
 
 var login_socket = function(message){
@@ -177,10 +184,11 @@ var login_socket = function(message){
 
 
 var echo_login = function(receiver_id, event, message){
-	send_message_to_socket(receiver_id, event, message);
 	if(login_socket(message)){
+		send_message_to_socket(receiver_id, event, message);
 		offline.send_offline_message(receiver_id, send_message_to_socket);
 	}else{
+		send_message_to_stash_socket(receiver_id, event, message);
 	    del_stash_socket_by_receiver_id(message.receiver_id);
 	}
 };

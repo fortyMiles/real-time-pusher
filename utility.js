@@ -1,8 +1,12 @@
 var json2object = function(data) {
-	if (typeof data === 'string' || data instanceof String) {
-		data = JSON.parse(data);  // string to object
-	}
-	return data;
+    try {
+    	if (typeof data === 'string' || data instanceof String) {
+    		data = JSON.parse(data);  // string to object
+    	}
+    	return data;
+    } catch (err) {
+        return data;
+    }
 }
 
 module.exports = {
