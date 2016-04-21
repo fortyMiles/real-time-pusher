@@ -7,7 +7,7 @@ var message = require('./message.js');
 
 var get_offline_messages = function(receiver_id){
 	return message.get_cached_messages(receiver_id);
-}
+};
 
 var add_an_offline_message = function(receiver_id, content){
 	if(!receiver_id){
@@ -30,7 +30,7 @@ var send_offline_message = function(receiver_id, send_func){
 		}
 	}
 	//offline_messages.forEach(m => send_func(m.receiver_id, m.event, m));
-}
+};
 
 module.exports = {
 	send_offline_message: send_offline_message,

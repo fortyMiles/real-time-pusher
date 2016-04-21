@@ -18,6 +18,8 @@ app.get('/', function(req, res) {
 
 io.on('connection', function(socket){
  	log.save(log.ACTION.NEW_CONNECT, actor=socket.id);
+  log.save("current_sockets", "list", socket_table.get_sockets_desc);
+  log.save("current_stash_sockets", "list", socket_table.get_stash_sockets_desc);
  	handle_event(socket);
 });
 

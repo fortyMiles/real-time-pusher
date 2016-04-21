@@ -61,9 +61,24 @@ Socket.prototype.set_logout = function(){
 var sockets = {}; // static var shared with all LoginSocketTable instances.
 var stash_sockets = {};
 
+function get_receiver_socket_dict(the_sockets) {
+	var desc = {};
+	for (var receiver_id in the_sockets) {
+		desc[receiver_id] = the_sockets[receiver_id].socket.id;
+	}
+}
+
+var get_sockets_desc = function() {
+	return get_receiver_socket_dict(sockets);
+};
+
+var get_stash_sockets_desc = function() {
+	return get_receiver_socket_dict(stash_sockets);
+};
+
 var add_stash_socket = function(receiver_id, socket) {
 	stash_sockets[receiver_id] = socket;
-}
+};
 
 var add_socket = function(receiver_id, socket){
 	sockets[receiver_id] = socket;
@@ -71,7 +86,7 @@ var add_socket = function(receiver_id, socket){
 
 var get_stash_socket = function(receiver_id) {
 	return stash_sockets[receiver_id];
-}
+};
 
 var get_socket = function(receiver_id){
     return sockets[receiver_id];
@@ -93,7 +108,7 @@ var del_stash_socket = function(socket, data) {
 			break;
 		}
 	}
-}
+};
 
 var del_socket = function(socket, data) {
 	for (var i in sockets) {
@@ -103,7 +118,7 @@ var del_socket = function(socket, data) {
 			break;
 		}
 	}
-}
+};
 
 var set_socket_offline = function(receiver_id){
 	sockets[receiver_id].set_logout();
@@ -114,7 +129,7 @@ const LOGOUT_MESSAGE = {
 	"event": "login",
 	"login": false,
 	"message" :"logout because another device has logined"
-}
+};
 
 var set_socket_online = function(receiver_id){
 	// delete socket from stash_sockets and add it to sockets, 
@@ -185,5 +200,7 @@ module.exports = {
 	Socket: Socket,
 	send_message: send_message,
 	add_stash_socket: add_stash_socket,
-	del_socket: del_socket
+	del_socket: del_socket,
+	get_sockets_desc: get_sockets_desc,
+	get_stash_sockets_desc: get_stash_sockets_desc
 };
