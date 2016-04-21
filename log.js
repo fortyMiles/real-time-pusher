@@ -16,7 +16,7 @@ var print_log = function(action, actor, message){
   if (typeof(message) != 'string') {
      message = JSON.stringify(message);
   }
-  console.log('[' + new Date().toISOString() + '] ' + action + ' ' + actor + ': ' + message);
+  console.log('[' + new Date() + '] ' + action + ' ' + actor + ': ' + message);
 };
 
 module.exports = {

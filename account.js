@@ -24,7 +24,7 @@ var check_format_okay = function(data){
 var login = function(socket, data){
 	if(check_format_okay(data)){ 
 		redis.pub_login_message_to_server(data);
-		SOCKETS.add_socket(data.user_id, socket, logined=false);
+		SOCKETS.add_stash_socket(data.user_id, socket);
 	}else{
 		socket.send_error_message(message=LOGIN_FORMAT_ERROR_MESSAGE);
 	}

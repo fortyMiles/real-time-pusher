@@ -35,11 +35,13 @@ Socket.prototype.emit = function(event, message){
 		log.save(log.ACTION.SEND, this.socket2str(), JSON.stringify(message));
 		return true;
 	}else{
-		offline.add_an_offline_message(
-			receiver_id=message.receiver_id,
-			content=message
-		);
-		log.save(log.ACTION.SAVE, this.socket2str(), JSON.stringify(message));
+		if (event != 'login') {
+			offline.add_an_offline_message(
+				receiver_id=message.receiver_id,
+				content=message
+			);
+			log.save(log.ACTION.SAVE, this.socket2str(), JSON.stringify(message));
+		}
 		return false;
 	}
 };
@@ -57,23 +59,46 @@ Socket.prototype.set_logout = function(){
 };
 
 var sockets = {}; // static var shared with all LoginSocketTable instances.
+var stash_sockets = {};
+
+var add_stash_socket = function(receiver_id, socket) {
+	stash_sockets[receiver_id] = socket;
+}
 
 var add_socket = function(receiver_id, socket){
-	// sockets[receiver_id] = {};
 	sockets[receiver_id] = socket;
 };
 
+var get_stash_socket = function(receiver_id) {
+	return stash_sockets[receiver_id];
+}
+
 var get_socket = function(receiver_id){
     return sockets[receiver_id];
+};
+
+var del_stash_socket_by_receiver_id = function(receiver_id){
+	delete stash_sockets[receiver_id];
 };
 
 var del_socket_by_receiver_id = function(receiver_id){
 	delete sockets[receiver_id];
 };
 
+var del_stash_socket = function(socket, data) {
+	for (var i in stash_sockets) {
+		if (stash_sockets.hasOwnProperty(i) && stash_sockets[i].socket == socket) {
+			log.save("delete_stash_socket", socket.socket2str());
+			delete stash_sockets[i];
+			break;
+		}
+	}
+}
+
 var del_socket = function(socket, data) {
 	for (var i in sockets) {
 		if (sockets.hasOwnProperty(i) && sockets[i].socket == socket) {
+			log.save("delete_socket", socket.socket2str());
 			delete sockets[i];
 			break;
 		}
@@ -82,17 +107,31 @@ var del_socket = function(socket, data) {
 
 var set_socket_offline = function(receiver_id){
 	sockets[receiver_id].set_logout();
-	//del_socket_by_receiver_id(receiver_id);
+	del_socket_by_receiver_id(receiver_id);
 };
 
+const LOGOUT_MESSAGE = {
+	"event": "login",
+	"login": false,
+	"message" :"logout because another device has logined"
+}
+
 var set_socket_online = function(receiver_id){
-	if(sockets.hasOwnProperty(receiver_id)){
-		sockets[receiver_id].set_login();
+	// delete socket from stash_sockets and add it to sockets, 
+	// if sockets has another socket for the same receiver_id, logout it
+	var socket = get_stash_socket(receiver_id);
+	if (socket) {
+		del_stash_socket_by_receiver_id(receiver_id);
+		var old_socket = get_socket(receiver_id);
+		if(old_socket && old_socket != socket){
+			old_socket.emit("login", LOGOUT_MESSAGE);
+			del_socket_by_receiver_id(receiver_id);
+		}
+		socket.set_login();
+		add_socket(socket);
 		return true;
-	}else{
-		// throw "No this socket";
-		return false;
 	}
+	return false;
 };
 
 var send_message_to_socket = function(receiver_id, event, message){
@@ -100,20 +139,17 @@ var send_message_to_socket = function(receiver_id, event, message){
 	if(client_socket){ // if socket in register table.
 		client_socket.emit(event, message);
 	}else{ // not in, save message into offline.
-		log.save(log.ACTION.WITHOUT, receiver_id, message);
-		offline.add_an_offline_message(
-			receiver_id=message.receiver_id,
-			content=message
-		);
+		if (event != 'login') {
+			offline.add_an_offline_message(
+				receiver_id=message.receiver_id,
+				content=message
+			);
+			log.save(log.ACTION.WITHOUT, receiver_id, message);
+		}
 	}
 };
 
 const LOGIN = 'login';
-const LOGIN_ERROR_MESSAGE = {
-	"event": "login",
-	"login": false,
-	"message": "login fail, please check your token."
-};
 
 var login_socket = function(message){
     if(message[LOGIN]){
@@ -129,7 +165,7 @@ var echo_login = function(receiver_id, event, message){
 	if(login_socket(message)){
 		offline.send_offline_message(receiver_id, send_message_to_socket);
 	}else{
-	    del_socket_by_receiver_id(message.receiver_id);
+	    del_stash_socket_by_receiver_id(message.receiver_id);
 	}
 };
 
@@ -148,6 +184,6 @@ var send_message = function(message, event){
 module.exports = {
 	Socket: Socket,
 	send_message: send_message,
-	add_socket: add_socket,
+	add_stash_socket: add_stash_socket,
 	del_socket: del_socket
 };
